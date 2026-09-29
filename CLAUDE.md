@@ -54,6 +54,7 @@
 | Version / Migration | Feature |
 |---|---|
 | `init` | Core schema: users, customers, products, orders, order items, payments, inventory ledger |
+| — | Auth (first-user ADMIN, JWT), users, customers, products, inventory adjustments, orders + lifecycle, payments, dashboard, seed, Swagger |
 
 ---
 
