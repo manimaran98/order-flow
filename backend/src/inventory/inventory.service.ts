@@ -5,6 +5,12 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AdjustStockDto } from './dto/adjust-stock.dto.js';
 
+export type StockLine = { productId: string; quantity: number };
+type OrderRef = { orderId: string; userId: string };
+
+// Taking row locks in a consistent order prevents deadlocks between concurrent multi-item confirms.
+const byProductId = (lines: StockLine[]) => [...lines].sort((a, b) => a.productId.localeCompare(b.productId));
+
 const stockSelect = {
   id: true,
   name: true,
@@ -79,6 +85,39 @@ export class InventoryService {
       });
       const product = await tx.product.findUniqueOrThrow({ where: { id: dto.productId }, select: stockSelect });
       return { product, transaction };
+    });
+  }
+
+  /** Deducts every line or none: the first shortfall throws and rolls back the caller's transaction. */
+  async deductForOrder(tx: Prisma.TransactionClient, lines: StockLine[], ref: OrderRef) {
+    const sorted = byProductId(lines);
+    for (const l of sorted) await this.take(tx, l.productId, l.quantity);
+    await tx.inventoryTransaction.createMany({
+      data: sorted.map((l) => ({
+        productId: l.productId,
+        type: 'SALE' as const,
+        quantity: -l.quantity,
+        referenceType: 'ORDER' as const,
+        referenceId: ref.orderId,
+        createdById: ref.userId,
+      })),
+    });
+  }
+
+  async restoreForOrder(tx: Prisma.TransactionClient, lines: StockLine[], ref: OrderRef) {
+    const sorted = byProductId(lines);
+    for (const l of sorted) {
+      await tx.product.update({ where: { id: l.productId }, data: { stockQuantity: { increment: l.quantity } } });
+    }
+    await tx.inventoryTransaction.createMany({
+      data: sorted.map((l) => ({
+        productId: l.productId,
+        type: 'RETURN' as const,
+        quantity: l.quantity,
+        referenceType: 'ORDER' as const,
+        referenceId: ref.orderId,
+        createdById: ref.userId,
+      })),
     });
   }
 

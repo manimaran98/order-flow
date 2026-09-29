@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { CurrentUser, Roles } from '../auth/decorators.js';
 import type { PublicUser } from '../users/user.select.js';
-import { CreateOrderDto, ListOrdersQuery, UpdateOrderDto } from './dto/order.dto.js';
+import { CreateOrderDto, ListOrdersQuery, UpdateOrderDto, UpdateOrderStatusDto } from './dto/order.dto.js';
 import { OrdersService } from './orders.service.js';
 
 @Controller('orders')
@@ -26,6 +26,15 @@ export class OrdersController {
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOrderDto) {
     return this.orders.update(id, dto);
+  }
+
+  @Patch(':id/status')
+  changeStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateOrderStatusDto,
+    @CurrentUser() user: PublicUser,
+  ) {
+    return this.orders.changeStatus(id, dto.status, user.id);
   }
 
   @Delete(':id')

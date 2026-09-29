@@ -1,11 +1,21 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { InvalidStatusTransitionException } from '../common/exceptions.js';
 import { money, ZERO } from '../common/money.js';
 import { paginate, skipTake } from '../common/pagination.js';
 import { CustomersService } from '../customers/customers.service.js';
-import type { Prisma } from '../generated/prisma/client.js';
+import type { OrderStatus, Prisma } from '../generated/prisma/client.js';
+import { InventoryService } from '../inventory/inventory.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateOrderDto, ListOrdersQuery, OrderItemInput, UpdateOrderDto } from './dto/order.dto.js';
-import { calculateTotals, derivePaymentStatus, formatOrderNumber, mergeLines, type PricedLine } from './order-rules.js';
+import {
+  calculateTotals,
+  canTransition,
+  derivePaymentStatus,
+  formatOrderNumber,
+  mergeLines,
+  STOCK_HELD_STATUSES,
+  type PricedLine,
+} from './order-rules.js';
 
 export const orderDetailInclude = {
   customer: { select: { id: true, name: true, phone: true } },
@@ -25,6 +35,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly customers: CustomersService,
+    private readonly inventory: InventoryService,
   ) {}
 
   async findAll(q: ListOrdersQuery) {
@@ -118,6 +129,35 @@ export class OrdersService {
       if (dto.items) {
         await tx.orderItem.deleteMany({ where: { orderId: id } });
         await tx.orderItem.createMany({ data: items.map((i) => ({ ...i, orderId: id })) });
+      }
+      return this.findOne(id, tx);
+    });
+  }
+
+  changeStatus(id: string, to: OrderStatus, userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({ where: { id }, include: { items: true } });
+      if (!order) throw new NotFoundException('Order not found');
+      if (!canTransition(order.status, to)) throw new InvalidStatusTransitionException(order.status, to);
+
+      // Claim the transition: if another request changed the status first, this matches 0 rows.
+      const now = new Date();
+      const claimed = await tx.order.updateMany({
+        where: { id, status: order.status },
+        data: {
+          status: to,
+          ...(to === 'CONFIRMED' && { confirmedAt: now }),
+          ...(to === 'CANCELLED' && { cancelledAt: now }),
+          ...(to === 'DELIVERED' && { deliveredAt: now }),
+        },
+      });
+      if (claimed.count === 0) throw new ConflictException('Order was changed by another request; please retry');
+
+      const lines = order.items.map(({ productId, quantity }) => ({ productId, quantity }));
+      const ref = { orderId: id, userId };
+      if (to === 'CONFIRMED') await this.inventory.deductForOrder(tx, lines, ref);
+      if (to === 'CANCELLED' && STOCK_HELD_STATUSES.includes(order.status)) {
+        await this.inventory.restoreForOrder(tx, lines, ref);
       }
       return this.findOne(id, tx);
     });
