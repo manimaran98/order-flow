@@ -28,3 +28,12 @@ export async function createProduct(app: TestApp, adminToken: string, body: Reco
     .expect(201);
   return res.body;
 }
+
+export async function createOrder(
+  app: TestApp,
+  token: string,
+  body: { customerId: string; items: { productId: string; quantity: number }[]; discount?: number; notes?: string },
+) {
+  const res = await api(app).post('/orders').set(bearer(token)).send(body).expect(201);
+  return res.body;
+}

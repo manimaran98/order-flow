@@ -5,6 +5,7 @@ import { validateEnv } from './config/env.validation.js';
 import { CustomersModule } from './customers/customers.module.js';
 import { HealthController } from './health/health.controller.js';
 import { InventoryModule } from './inventory/inventory.module.js';
+import { OrdersModule } from './orders/orders.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { ProductsModule } from './products/products.module.js';
 import { UsersModule } from './users/users.module.js';
@@ -18,6 +19,7 @@ import { UsersModule } from './users/users.module.js';
     CustomersModule,
     ProductsModule,
     InventoryModule,
+    OrdersModule,
   ],
   controllers: [HealthController],
 })
