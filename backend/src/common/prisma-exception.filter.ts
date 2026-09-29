@@ -43,6 +43,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
     if (err.code === 'P2025') return { status: 404, message: 'Record not found' };
     if (err.code === 'P2003' || pg === '23503') return { status: 400, message: 'Referenced record does not exist' };
     if (pg === '23514') return { status: 409, message: 'Operation violates a data integrity rule' };
+    if (pg === '22003') return { status: 400, message: 'Numeric value out of range' };
     return { status: 500, message: 'Internal server error' };
   }
 }

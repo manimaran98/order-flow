@@ -98,9 +98,14 @@ export class OrdersService {
 
   update(id: string, dto: UpdateOrderDto) {
     return this.prisma.$transaction(async (tx) => {
-      const order = await tx.order.findUnique({ where: { id }, include: { items: true } });
-      if (!order) throw new NotFoundException('Order not found');
-      if (order.status !== 'PENDING') throw new ConflictException('Only PENDING orders can be edited');
+      // Claim first: taking the row lock before reading items means a concurrent edit, confirm or
+      // payment either finished before us (and we read its result) or waits until we commit.
+      const claimed = await tx.order.updateMany({ where: { id, status: 'PENDING' }, data: { updatedAt: new Date() } });
+      if (claimed.count === 0) {
+        if (!(await tx.order.count({ where: { id } }))) throw new NotFoundException('Order not found');
+        throw new ConflictException('Only PENDING orders can be edited');
+      }
+      const order = await tx.order.findUniqueOrThrow({ where: { id }, include: { items: true } });
       if (dto.customerId) await this.customers.ensureExists(dto.customerId, tx);
 
       const lines: PricedLine[] = dto.items
@@ -112,9 +117,8 @@ export class OrdersService {
         throw new ConflictException(`New total is below the RM ${order.paidAmount.toFixed(2)} already paid`);
       }
 
-      // Guard on status and paidAmount: a concurrent confirm or payment makes this match 0 rows.
-      const claimed = await tx.order.updateMany({
-        where: { id, status: 'PENDING', paidAmount: order.paidAmount },
+      await tx.order.update({
+        where: { id },
         data: {
           customerId: dto.customerId,
           notes: dto.notes,
@@ -124,7 +128,6 @@ export class OrdersService {
           paymentStatus: derivePaymentStatus(total, order.paidAmount),
         },
       });
-      if (claimed.count === 0) throw new ConflictException('Order was changed by another request; please retry');
 
       if (dto.items) {
         await tx.orderItem.deleteMany({ where: { orderId: id } });
@@ -136,7 +139,7 @@ export class OrdersService {
 
   changeStatus(id: string, to: OrderStatus, userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      const order = await tx.order.findUnique({ where: { id }, include: { items: true } });
+      const order = await tx.order.findUnique({ where: { id }, select: { status: true } });
       if (!order) throw new NotFoundException('Order not found');
       if (!canTransition(order.status, to)) throw new InvalidStatusTransitionException(order.status, to);
 
@@ -153,7 +156,9 @@ export class OrdersService {
       });
       if (claimed.count === 0) throw new ConflictException('Order was changed by another request; please retry');
 
-      const lines = order.items.map(({ productId, quantity }) => ({ productId, quantity }));
+      // Read items only after the claim: we now hold the row lock, so a concurrent edit has either
+      // committed its new items already or is waiting behind us.
+      const lines = await tx.orderItem.findMany({ where: { orderId: id }, select: { productId: true, quantity: true } });
       const ref = { orderId: id, userId };
       if (to === 'CONFIRMED') await this.inventory.deductForOrder(tx, lines, ref);
       if (to === 'CANCELLED' && STOCK_HELD_STATUSES.includes(order.status)) {

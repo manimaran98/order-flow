@@ -76,6 +76,11 @@ describe('calculateTotals', () => {
     expect(calculateTotals(lines, money('25.30')).total.toFixed(2)).toBe('0.00');
   });
 
+  it('rejects a subtotal the money column cannot store', () => {
+    const huge = [{ productId: 'a', quantity: 200_000, unitPrice: money('99999.99') }];
+    expect(() => calculateTotals(huge, money(0))).toThrow(BadRequestException);
+  });
+
   it('rejects a discount above the subtotal', () => {
     expect(() => calculateTotals(lines, money('25.31'))).toThrow(BadRequestException);
   });

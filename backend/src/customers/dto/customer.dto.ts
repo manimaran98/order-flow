@@ -27,7 +27,7 @@ export class CreateCustomerDto {
   notes?: string;
 }
 
-export class UpdateCustomerDto extends PartialType(CreateCustomerDto) {}
+export class UpdateCustomerDto extends PartialType(CreateCustomerDto, { skipNullProperties: false }) {}
 
 export class ListCustomersQuery extends PaginationQueryDto {
   @IsOptional()

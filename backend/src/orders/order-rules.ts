@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ZERO } from '../common/money.js';
 import { businessDate } from '../common/time.js';
+import { MAX_MONEY } from '../common/validation.js';
 import type { OrderStatus, PaymentStatus, Prisma } from '../generated/prisma/client.js';
 
 type Decimal = Prisma.Decimal;
@@ -39,6 +40,7 @@ export type PricedLine = { productId: string; quantity: number; unitPrice: Decim
 export function calculateTotals(lines: PricedLine[], discount: Decimal) {
   const items = lines.map((l) => ({ ...l, subtotal: l.unitPrice.mul(l.quantity) }));
   const subtotal = items.reduce((sum, i) => sum.add(i.subtotal), ZERO);
+  if (subtotal.gt(MAX_MONEY)) throw new BadRequestException('Order total is too large');
   if (discount.gt(subtotal)) throw new BadRequestException('Discount cannot exceed subtotal');
   return { items, subtotal, total: subtotal.sub(discount) };
 }

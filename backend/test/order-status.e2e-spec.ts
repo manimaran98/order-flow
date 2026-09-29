@@ -111,6 +111,32 @@ describe('order status transitions', () => {
     expect(await ledgerSum(product.id)).toBe(0);
   });
 
+  it('deducts the items that are current when a confirm waits behind an edit', async () => {
+    const o = await order(1);
+    let release!: () => void;
+    let locked!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    const lockTaken = new Promise<void>((r) => (locked = r));
+    // Simulate an in-flight edit to A x 7 that holds the order row lock.
+    const edit = prismaOf(app).$transaction(
+      async (tx) => {
+        await tx.order.updateMany({ where: { id: o.id }, data: { subtotal: '87.50', total: '87.50' } });
+        await tx.orderItem.updateMany({ where: { orderId: o.id }, data: { quantity: 7, subtotal: '87.50' } });
+        locked();
+        await held;
+      },
+      { timeout: 10_000 },
+    );
+    await lockTaken;
+    const confirm = setStatus(o.id, 'CONFIRMED').then((r) => r);
+    await new Promise((r) => setTimeout(r, 300)); // confirm is now blocked on the row lock
+    release();
+    await edit;
+    expect((await confirm).status).toBe(200);
+    expect(await stockOf(product.id)).toBe(3);
+    expect(await ledgerSum(product.id)).toBe(3);
+  });
+
   it('keeps stock consistent when confirm and cancel race on one order', async () => {
     const o = await order(3);
     await Promise.all([setStatus(o.id, 'CONFIRMED'), setStatus(o.id, 'CANCELLED')]);

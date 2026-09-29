@@ -7,11 +7,13 @@ import {
   IsOptional,
   IsString,
   Matches,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../common/pagination.js';
 import { ToBoolean } from '../../common/transforms.js';
+import { MAX_MONEY, MAX_STOCK_QTY, Optional } from '../../common/validation.js';
 
 export class CreateProductDto {
   @IsString()
@@ -29,26 +31,32 @@ export class CreateProductDto {
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
+  @Max(MAX_MONEY)
   sellingPrice: number;
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
+  @Max(MAX_MONEY)
   costPrice: number;
 
   /** Opening stock only; later changes go through /inventory/adjustments. */
-  @IsOptional()
+  @Optional()
   @IsInt()
   @Min(0)
+  @Max(MAX_STOCK_QTY)
   stockQuantity?: number;
 
-  @IsOptional()
+  @Optional()
   @IsInt()
   @Min(0)
+  @Max(MAX_STOCK_QTY)
   lowStockThreshold?: number;
 }
 
-export class UpdateProductDto extends PartialType(OmitType(CreateProductDto, ['stockQuantity'] as const)) {
-  @IsOptional()
+export class UpdateProductDto extends PartialType(OmitType(CreateProductDto, ['stockQuantity'] as const), {
+  skipNullProperties: false,
+}) {
+  @Optional()
   @IsBoolean()
   isActive?: boolean;
 }

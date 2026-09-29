@@ -33,6 +33,10 @@ describe('PrismaExceptionFilter', () => {
     expect(run('P2010', { originalCode: '23514' }).statusCode).toBe(409);
   });
 
+  it('maps a numeric overflow to 400', () => {
+    expect(run('P2020', { originalCode: '22003' }).statusCode).toBe(400);
+  });
+
   it('maps a foreign key violation to 400', () => {
     expect(run('P2003').statusCode).toBe(400);
   });

@@ -98,6 +98,32 @@ describe('orders', () => {
     expect(discountOnly.body.total).toBe('50.00');
   });
 
+  it('recomputes totals from the current items when an edit waits behind another edit', async () => {
+    const order = await createOrder(app, t.staff, { customerId: customer.id, items: [{ productId: coke.id, quantity: 1 }] });
+    let release!: () => void;
+    let locked!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    const lockTaken = new Promise<void>((r) => (locked = r));
+    // Simulate an in-flight edit to coke x 5 that holds the order row lock.
+    const other = prismaOf(app).$transaction(
+      async (tx) => {
+        await tx.order.updateMany({ where: { id: order.id }, data: { subtotal: '62.50', total: '62.50' } });
+        await tx.orderItem.updateMany({ where: { orderId: order.id }, data: { quantity: 5, subtotal: '62.50' } });
+        locked();
+        await held;
+      },
+      { timeout: 10_000 },
+    );
+    await lockTaken;
+    const patch = api(app).patch(`/orders/${order.id}`).set(bearer(t.staff)).send({ notes: 'Call first' }).then((r) => r);
+    await new Promise((r) => setTimeout(r, 300)); // the notes edit is now blocked on the row lock
+    release();
+    await other;
+    expect((await patch).status).toBe(200);
+    const got = await api(app).get(`/orders/${order.id}`).set(bearer(t.staff)).expect(200);
+    expect(got.body).toMatchObject({ subtotal: '62.50', total: '62.50', notes: 'Call first' });
+  });
+
   it('lists with filters, search and pagination', async () => {
     const other = await createCustomer(app, t.staff, { name: 'Syarikat Tan Bros' });
     await createOrder(app, t.staff, { customerId: customer.id, items: [{ productId: coke.id, quantity: 1 }] });

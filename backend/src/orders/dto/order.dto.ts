@@ -17,6 +17,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../common/pagination.js';
+import { MAX_MONEY, Optional } from '../../common/validation.js';
 import { OrderStatus, PaymentStatus } from '../../generated/prisma/client.js';
 
 export class OrderItemInput {
@@ -40,9 +41,10 @@ export class CreateOrderDto {
   @Type(() => OrderItemInput)
   items: OrderItemInput[];
 
-  @IsOptional()
+  @Optional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
+  @Max(MAX_MONEY)
   discount?: number;
 
   @IsOptional()
@@ -51,7 +53,7 @@ export class CreateOrderDto {
   notes?: string;
 }
 
-export class UpdateOrderDto extends PartialType(CreateOrderDto) {}
+export class UpdateOrderDto extends PartialType(CreateOrderDto, { skipNullProperties: false }) {}
 
 export class UpdateOrderStatusDto {
   @IsEnum(OrderStatus)

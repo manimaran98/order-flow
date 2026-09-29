@@ -1,22 +1,23 @@
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { Optional } from '../../common/validation.js';
 import { Role } from '../../generated/prisma/client.js';
 
 export class UpdateUserDto {
-  @IsOptional()
+  @Optional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   name?: string;
 
-  @IsOptional()
+  @Optional()
   @IsEnum(Role)
   role?: Role;
 
-  @IsOptional()
+  @Optional()
   @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional()
+  @Optional()
   @IsString()
   @MinLength(8)
   @MaxLength(72)

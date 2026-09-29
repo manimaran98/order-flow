@@ -1,5 +1,16 @@
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsPositive, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../common/pagination.js';
+import { MAX_MONEY } from '../../common/validation.js';
 import { PaymentMethod } from '../../generated/prisma/client.js';
 
 export class CreatePaymentDto {
@@ -8,6 +19,7 @@ export class CreatePaymentDto {
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
+  @Max(MAX_MONEY)
   amount: number;
 
   @IsEnum(PaymentMethod)
