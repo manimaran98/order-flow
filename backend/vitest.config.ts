@@ -9,5 +9,7 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.spec.ts'],
+    // Nest loads this at runtime; bare unit tests of DTOs (class-transformer @Type) need it too.
+    setupFiles: ['reflect-metadata'],
   },
 });
