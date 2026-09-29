@@ -43,6 +43,7 @@ OrderFlow is split into three sub-projects, each with its own spec → plan → 
 | D15 | `POST /inventory/adjustments` (ADMIN) for RESTOCK/ADJUSTMENT — the brief's API had no way to add stock. |
 | D16 | Swagger UI at `/docs` via `@nestjs/swagger`. |
 | D17 | "Today" for dashboard metrics = calendar day in `Asia/Kuala_Lumpur`. |
+| D18 | Toolchain as scaffolded by NestJS 12: ESM (`"type": "module"`, `.js` import suffixes), Vitest, oxlint, TypeScript 6. Prisma 7.10 (stable; npm `latest` is an 8.0 RC) with the `prisma-client` generator, `@prisma/adapter-pg` driver adapter and `prisma.config.ts`. Node 22 in containers. |
 
 ---
 
@@ -136,7 +137,7 @@ InventoryRefType:  ORDER | MANUAL
 | id | uuid PK | |
 | name | string | |
 | email | string | unique, stored lowercased |
-| passwordHash | string | bcrypt, cost 10 |
+| passwordHash | string | bcryptjs (pure JS — no native build differences between Windows host and Linux container), cost 10 |
 | role | Role | |
 | isActive | bool | default true; inactive users cannot log in or use existing tokens |
 | createdAt / updatedAt | timestamptz | |
@@ -315,7 +316,7 @@ Global conventions:
 - List endpoints: `?page=1&limit=20` (limit max 100) → `{ data: [...], meta: { page, limit, total, totalPages } }`.
 - Validation: global `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`.
 - Auth: global `JwtAuthGuard`; `@Public()` opts out. `@Roles('ADMIN')` + `RolesGuard` for admin-only routes.
-- `JwtStrategy.validate` loads the user by id and rejects inactive/deleted users (so deactivation takes effect immediately, at the cost of one indexed lookup per request).
+- The global `JwtAuthGuard` (built on `@nestjs/jwt`, no Passport) verifies the token, loads the user by id and rejects inactive/deleted users (so deactivation takes effect immediately, at the cost of one indexed lookup per request).
 
 | Method & path | Access | Notes |
 |---|---|---|
@@ -384,7 +385,7 @@ Global conventions:
 
 ## 11. Testing
 
-Runner: Jest (Nest default). `npm test` = unit tests; `npm run test:e2e` = API tests against `orderflow_test`.
+Runner: Vitest (NestJS 12 default). `npm test` = unit tests; `npm run test:e2e` = API tests against `orderflow_test`.
 
 **Unit (no DB):** `canTransition` full matrix; `derivePaymentStatus`; order totals/discount maths with Decimal edge cases (e.g. 0.1 + 0.2); order-number formatting (MYT date boundary).
 
