@@ -238,7 +238,6 @@ npx -y shadcn@latest add button input label card badge table dialog sheet sonner
 npm i server-only
 npm i -D vitest jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event vite-tsconfig-paths @playwright/test pg @types/pg
 npm pkg set scripts.test="vitest run" scripts.test:watch="vitest" scripts.test:e2e="playwright test" scripts.typecheck="tsc --noEmit"
-cp ../backend/.env.example /dev/null
 ```
 
 Do **not** add `@vitejs/plugin-react`. Version 6 has a Babel peer conflict, and Vite 8 compiles JSX natively.
@@ -4754,7 +4753,7 @@ describe('PaymentForm', () => {
     expect(screen.getByLabelText('Amount (RM)')).toHaveValue(40);
     expect(screen.getByLabelText('Amount (RM)')).toHaveAttribute('max', '40.00');
     expect(screen.getByLabelText('Method')).toHaveValue('BANK_TRANSFER');
-    expect(screen.getByLabelText('Paid on')).toHaveValue(expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/));
+    expect((screen.getByLabelText('Paid on') as HTMLInputElement).value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   it('shows an API error and closes when saved', async () => {
@@ -5788,7 +5787,7 @@ test('confirming without enough stock explains why and keeps the order pending',
 
 - [ ] **Step 4: Run the journey**
 
-Make sure Postgres is up (`docker compose up -d postgres`) and that no backend e2e run is using `orderflow_test`. Then:
+Make sure Postgres is up (`docker compose up -d postgres`) and that no backend e2e run is using `orderflow_test`. Stop the compose app containers first (`docker compose stop backend frontend`), because the e2e backend build rewrites `backend/dist`, which the compose backend also writes to. Then:
 
 Run: `npm run test:e2e`
 Expected: 4 passed (2 tests × desktop and phone).
