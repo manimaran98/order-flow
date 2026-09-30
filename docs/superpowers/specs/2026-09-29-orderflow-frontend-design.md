@@ -215,3 +215,14 @@ Add a `frontend` service: `frontend/Dockerfile.dev` (`node:22-alpine`, npm@11, `
 - **Multi-status filters** ("awaiting fulfilment" = CONFIRMED, PACKING or READY; "unpaid" = UNPAID or PARTIAL): the API filters one value at a time. For the MVP the dashboard links use a comma list. The orders page sends one request per status (at most 3) and merges and sorts the results, with a note that pagination is approximate in that mode. *Cost if wrong:* approximate pages on those filtered views. Upgrade path: accept `status=A,B` in the backend (a one-line `in` filter).
 - **"Recent orders" on the desktop dashboard** uses `GET /orders?limit=5`, so no new endpoint is needed.
 - **README encoding:** convert `README.md` from UTF-16 to UTF-8 on this branch, and add frontend run instructions.
+
+---
+
+## 10. Plan-time amendments
+
+1. Multi-status filters: the backend now accepts comma lists (`?status=CONFIRMED,PACKING,READY`, `?paymentStatus=UNPAID,PARTIAL`). This replaces the client-side merge in §9, so pagination is exact.
+2. A 401 during rendering redirects to the route handler `/session/expired`, which deletes the cookie and redirects to `/login?expired=1`. Next 16 only allows cookie writes in Server Functions and Route Handlers.
+3. Stock warnings after creating an order are shown as a toast during navigation, not as a banner.
+4. Pagination is Previous/Next with "Page x of y" on both layouts. There is no column sorting because the API has no sort parameter.
+5. Forms show one API error message plus native HTML validation. There are no per-field server errors.
+6. One generic loading skeleton for the authenticated area.

@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -19,6 +19,10 @@ import {
 import { PaginationQueryDto } from '../../common/pagination.js';
 import { MAX_MONEY, Optional } from '../../common/validation.js';
 import { OrderStatus, PaymentStatus } from '../../generated/prisma/client.js';
+
+/** `?status=A,B` → ['A', 'B'] */
+const CommaList = () =>
+  Transform(({ value }) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value));
 
 export class OrderItemInput {
   @IsUUID()
@@ -62,12 +66,14 @@ export class UpdateOrderStatusDto {
 
 export class ListOrdersQuery extends PaginationQueryDto {
   @IsOptional()
-  @IsEnum(OrderStatus)
-  status?: OrderStatus;
+  @CommaList()
+  @IsEnum(OrderStatus, { each: true })
+  status?: OrderStatus[];
 
   @IsOptional()
-  @IsEnum(PaymentStatus)
-  paymentStatus?: PaymentStatus;
+  @CommaList()
+  @IsEnum(PaymentStatus, { each: true })
+  paymentStatus?: PaymentStatus[];
 
   @IsOptional()
   @IsUUID()

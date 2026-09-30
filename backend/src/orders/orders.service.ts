@@ -40,8 +40,8 @@ export class OrdersService {
 
   async findAll(q: ListOrdersQuery) {
     const where: Prisma.OrderWhereInput = {
-      status: q.status,
-      paymentStatus: q.paymentStatus,
+      status: q.status && { in: q.status },
+      paymentStatus: q.paymentStatus && { in: q.paymentStatus },
       customerId: q.customerId,
       ...(q.search && {
         OR: [

@@ -137,6 +137,17 @@ describe('orders', () => {
     expect((await list('?limit=1&page=2')).body.meta).toEqual({ page: 2, limit: 1, total: 2, totalPages: 2 });
   });
 
+  it('filters by several statuses at once', async () => {
+    const a = await createOrder(app, t.staff, { customerId: customer.id, items: [{ productId: coke.id, quantity: 1 }] });
+    await createOrder(app, t.staff, { customerId: customer.id, items: [{ productId: coke.id, quantity: 1 }] });
+    await api(app).patch(`/orders/${a.id}/status`).set(bearer(t.staff)).send({ status: 'CONFIRMED' }).expect(200);
+    const list = (qs: string) => api(app).get(`/orders${qs}`).set(bearer(t.staff));
+    expect((await list('?status=CONFIRMED,PACKING,READY').expect(200)).body.meta.total).toBe(1);
+    expect((await list('?status=PENDING,CONFIRMED').expect(200)).body.meta.total).toBe(2);
+    expect((await list('?paymentStatus=UNPAID,PARTIAL').expect(200)).body.meta.total).toBe(2);
+    await list('?status=PENDING,SHIPPED').expect(400);
+  });
+
   it('rejects out-of-range pagination and malformed ids', async () => {
     for (const qs of ['?limit=0', '?limit=101', '?page=0', '?status=SHIPPED']) {
       await api(app).get(`/orders${qs}`).set(bearer(t.staff)).expect(400);
