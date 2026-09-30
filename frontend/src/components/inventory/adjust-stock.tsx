@@ -1,9 +1,10 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { adjustStock } from '@/actions/inventory';
 import type { FormAction } from '@/actions/result';
+import { useFormAction } from '@/components/common/use-form-action';
 import { Field, FormError, SelectField, SubmitButton, TextareaField } from '@/components/common/field';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 type AdjustType = 'RESTOCK' | 'ADJUSTMENT';
 
 export function AdjustStockForm({ action, productId, onDone }: { action: FormAction; productId: string; onDone?: () => void }) {
-  const [state, formAction] = useActionState(action, null);
+  const { state, onSubmit, pending } = useFormAction(action);
   const [type, setType] = useState<AdjustType>('RESTOCK');
   const handled = useRef<unknown>(null);
   useEffect(() => {
@@ -22,7 +23,7 @@ export function AdjustStockForm({ action, productId, onDone }: { action: FormAct
     }
   }, [state, onDone]);
   return (
-    <form action={formAction} className="grid gap-3">
+    <form onSubmit={onSubmit} className="grid gap-3">
       <input type="hidden" name="productId" value={productId} />
       <SelectField
         label="Type"
@@ -52,7 +53,7 @@ export function AdjustStockForm({ action, productId, onDone }: { action: FormAct
         placeholder={type === 'ADJUSTMENT' ? 'Why? e.g. damaged, recount' : 'Optional'}
       />
       <FormError message={state && !state.ok ? state.error : null} />
-      <SubmitButton>Save adjustment</SubmitButton>
+      <SubmitButton pending={pending}>Save adjustment</SubmitButton>
     </form>
   );
 }

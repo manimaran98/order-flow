@@ -1,6 +1,7 @@
 // @vitest-environment node
-const { store, redirect } = vi.hoisted(() => ({
+const { store, redirect, readOnly } = vi.hoisted(() => ({
   store: new Map<string, string>(),
+  readOnly: { value: false },
   redirect: vi.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
   }),
@@ -10,7 +11,10 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({
     get: (k: string) => (store.has(k) ? { name: k, value: store.get(k) } : undefined),
     set: (k: string, v: string) => store.set(k, v),
-    delete: (k: string) => store.delete(k),
+    delete: (k: string) => {
+      if (readOnly.value) throw new Error('Cookies can only be modified in a Server Action or Route Handler.');
+      store.delete(k);
+    },
   }),
 }));
 vi.mock('next/navigation', () => ({
@@ -29,6 +33,7 @@ const json = (status: number, body: unknown) =>
 
 beforeEach(() => {
   store.clear();
+  readOnly.value = false;
   fetchMock.mockReset();
   redirect.mockClear();
   process.env.API_URL = 'http://api.test';
@@ -45,8 +50,16 @@ describe('apiFetch', () => {
     expect(init.cache).toBe('no-store');
   });
 
-  it('sends the session to /session/expired when the API rejects our token', async () => {
+  it('clears the cookie and goes to login when the API rejects our token (Server Action)', async () => {
     store.set('of_session', 'old');
+    fetchMock.mockResolvedValue(json(401, { statusCode: 401, message: 'Unauthorized' }));
+    await expect(apiFetch('/auth/me')).rejects.toThrow('REDIRECT:/login?expired=1');
+    expect(store.has('of_session')).toBe(false);
+  });
+
+  it('falls back to the /session/expired route while rendering (cookies are read-only there)', async () => {
+    store.set('of_session', 'old');
+    readOnly.value = true;
     fetchMock.mockResolvedValue(json(401, { statusCode: 401, message: 'Unauthorized' }));
     await expect(apiFetch('/auth/me')).rejects.toThrow('REDIRECT:/session/expired');
   });

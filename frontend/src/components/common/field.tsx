@@ -66,11 +66,23 @@ export function FormError({ message }: { message?: string | null }) {
   );
 }
 
-export function SubmitButton({ children, pendingLabel = 'Saving…', className }: { children: ReactNode; pendingLabel?: string; className?: string }) {
-  const { pending } = useFormStatus();
+export function SubmitButton({
+  children,
+  pending,
+  pendingLabel = 'Saving…',
+  className,
+}: {
+  children: ReactNode;
+  /** Pass when the form submits via onSubmit (useFormAction); useFormStatus only sees `<form action>`. */
+  pending?: boolean;
+  pendingLabel?: string;
+  className?: string;
+}) {
+  const status = useFormStatus();
+  const busy = pending ?? status.pending;
   return (
-    <Button type="submit" disabled={pending} className={className}>
-      {pending ? pendingLabel : children}
+    <Button type="submit" disabled={busy} className={className}>
+      {busy ? pendingLabel : children}
     </Button>
   );
 }

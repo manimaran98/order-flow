@@ -24,11 +24,14 @@ describe('CustomerForm', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Saved');
   });
 
-  it('shows the API error', async () => {
+  it('shows the API error and keeps everything the user typed', async () => {
     const action = vi.fn(async () => ({ ok: false as const, error: 'email must be an email' }));
     render(<CustomerForm action={action} submitLabel="Save customer" />);
-    await userEvent.type(screen.getByLabelText('Name'), 'X');
+    await userEvent.type(screen.getByLabelText('Name'), 'Kedai Baru');
+    await userEvent.type(screen.getByLabelText('Address'), 'Jalan 2, Ipoh');
     await userEvent.click(screen.getByRole('button', { name: 'Save customer' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('email must be an email');
+    expect(screen.getByLabelText('Name')).toHaveValue('Kedai Baru');
+    expect(screen.getByLabelText('Address')).toHaveValue('Jalan 2, Ipoh');
   });
 });

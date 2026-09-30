@@ -27,7 +27,14 @@ export function OrderComposer({ mode, initial, submit }: Props) {
     if (pending || !totals.canSubmit) return;
     startTransition(async () => {
       setError(null);
-      const result = await submit(draftToInput(draft));
+      let result: Awaited<ReturnType<typeof submit>>;
+      try {
+        result = await submit(draftToInput(draft));
+      } catch {
+        // Network drop or an unexpected API error: keep the draft so nothing has to be re-entered.
+        setError("Couldn't save the order. Check your connection and try again.");
+        return;
+      }
       if (!result.ok) {
         setError(result.error);
         return;

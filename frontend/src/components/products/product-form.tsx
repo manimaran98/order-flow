@@ -1,15 +1,15 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormAction } from '@/components/common/use-form-action';
 import type { FormAction } from '@/actions/result';
 import { Field, FormError, SubmitButton, TextareaField } from '@/components/common/field';
 import type { Product } from '@/lib/types';
 
 export function ProductForm({ action, product, submitLabel }: { action: FormAction; product?: Product; submitLabel: string }) {
-  const [state, formAction] = useActionState(action, null);
+  const { state, onSubmit, pending } = useFormAction(action);
   const creating = !product;
   return (
-    <form action={formAction} className="grid max-w-xl gap-4">
+    <form onSubmit={onSubmit} className="grid max-w-xl gap-4">
       <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
         <Field label="Name" name="name" required maxLength={200} defaultValue={product?.name} />
         <Field label="SKU" name="sku" required pattern="[A-Za-z0-9._\-]{1,50}" defaultValue={product?.sku} />
@@ -35,7 +35,7 @@ export function ProductForm({ action, product, submitLabel }: { action: FormActi
           Saved
         </p>
       )}
-      <SubmitButton className="justify-self-start">{submitLabel}</SubmitButton>
+      <SubmitButton pending={pending} className="justify-self-start">{submitLabel}</SubmitButton>
     </form>
   );
 }

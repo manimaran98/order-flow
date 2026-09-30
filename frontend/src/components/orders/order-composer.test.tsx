@@ -61,6 +61,16 @@ describe('OrderComposer', () => {
     expect(push).not.toHaveBeenCalled();
   });
 
+  it('keeps the draft and explains when saving fails (e.g. the connection drops)', async () => {
+    const submit = vi.fn(async () => Promise.reject(new TypeError('Failed to fetch')));
+    render(<OrderComposer mode="create" initial={ready} submit={submit as never} />);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Create order' })[1]);
+    expect((await screen.findAllByRole('alert'))[0]).toHaveTextContent("Couldn't save the order. Check your connection and try again.");
+    screen.getAllByRole('status', { name: 'Order total' }).forEach((t) => expect(t).toHaveTextContent('RM 12.50'));
+    expect(screen.getAllByRole('button', { name: 'Create order' })[1]).toBeEnabled();
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it('picks a customer from search on an empty draft', async () => {
     render(<OrderComposer mode="create" submit={vi.fn()} />);
     const [phoneSearch] = screen.getAllByRole('searchbox', { name: 'Search customers' });

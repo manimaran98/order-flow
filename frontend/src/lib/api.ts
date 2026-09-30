@@ -1,6 +1,6 @@
 import 'server-only';
 import { notFound, redirect } from 'next/navigation';
-import { getToken } from './session';
+import { clearSession, getToken } from './session';
 
 export class ApiError extends Error {
   constructor(
@@ -38,12 +38,26 @@ export async function apiFetch<T = unknown>(path: string, { method = 'GET', body
   } catch {
     throw new ApiError(503, 'Cannot reach the OrderFlow API');
   }
-  // Our token was rejected (expired or user deactivated): clear it via the route handler.
-  if (res.status === 401 && token) redirect('/session/expired');
+  // Our token was rejected (expired or user deactivated).
+  if (res.status === 401 && token) await endSession();
   if (res.status === 204) return undefined as T;
   const data: unknown = await res.json().catch(() => ({}));
   if (!res.ok) throw toApiError(res.status, data);
   return data as T;
+}
+
+/**
+ * Server Actions and Route Handlers can delete the cookie directly. While a Server Component
+ * renders, cookies are read-only, so hand off to the /session/expired route handler instead.
+ * (A redirect from a Server Action to that route would drop its Set-Cookie.)
+ */
+async function endSession(): Promise<never> {
+  try {
+    await clearSession();
+  } catch {
+    redirect('/session/expired');
+  }
+  redirect('/login?expired=1');
 }
 
 export function toApiError(status: number, body: unknown): ApiError {

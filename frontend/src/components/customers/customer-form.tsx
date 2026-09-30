@@ -1,14 +1,14 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormAction } from '@/components/common/use-form-action';
 import type { FormAction } from '@/actions/result';
 import { Field, FormError, SubmitButton, TextareaField } from '@/components/common/field';
 import type { Customer } from '@/lib/types';
 
 export function CustomerForm({ action, customer, submitLabel }: { action: FormAction; customer?: Customer; submitLabel: string }) {
-  const [state, formAction] = useActionState(action, null);
+  const { state, onSubmit, pending } = useFormAction(action);
   return (
-    <form action={formAction} className="grid max-w-xl gap-4">
+    <form onSubmit={onSubmit} className="grid max-w-xl gap-4">
       <Field label="Name" name="name" required maxLength={200} defaultValue={customer?.name} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Phone" name="phone" type="tel" inputMode="tel" pattern="[0-9+\-\s()]{6,20}" defaultValue={customer?.phone ?? ''} />
@@ -22,7 +22,7 @@ export function CustomerForm({ action, customer, submitLabel }: { action: FormAc
           Saved
         </p>
       )}
-      <SubmitButton className="justify-self-start">{submitLabel}</SubmitButton>
+      <SubmitButton pending={pending} className="justify-self-start">{submitLabel}</SubmitButton>
     </form>
   );
 }
