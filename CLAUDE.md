@@ -9,10 +9,10 @@
 | Backend | NestJS 12 (ESM), TypeScript 6, Node 22 |
 | Database | PostgreSQL 16 |
 | ORM / Migrations | Prisma 7.10 (`prisma-client` generator, `@prisma/adapter-pg`) |
-| Frontend | Next.js App Router + Tailwind (sub-project 2, not built yet) |
+| Frontend | Next.js 16 App Router, React 19, Tailwind 4, shadcn/ui (radix-nova), BFF via Server Actions |
 | Auth | JWT bearer (`@nestjs/jwt`), 8h access token, ADMIN / STAFF roles |
 | Tests | Vitest + Supertest against real Postgres (`orderflow_test`) |
-| Infra | Docker Compose (postgres, backend) |
+| Infra | Docker Compose (postgres, backend, frontend) |
 
 ---
 
@@ -25,6 +25,9 @@
 - Order lifecycle is `canTransition()` in `backend/src/orders/order-rules.ts`: forward one step, or cancel from any non-terminal state. Only PENDING orders are editable or deletable.
 - Order status and payment status are independent. Payment status is derived from `paidAmount` vs `total`.
 - The business timezone for "today" and order numbers is Asia/Kuala_Lumpur.
+- Frontend: the browser never calls the API. `frontend/src/lib/api.ts` (server-only) adds the bearer token from the `of_session` httpOnly cookie. Mutations are Server Actions in `frontend/src/actions/` returning `ActionResult`.
+- Frontend dual layouts: `md:hidden` / `hidden md:block` siblings rendering the same data; interactive screens keep one state owner (e.g. `OrderComposer`).
+- Next 16: `proxy.ts` (not middleware), async `params`/`searchParams`/`cookies()`, `error.tsx` gets `retry`. Read `frontend/node_modules/next/dist/docs/` before using an unfamiliar API.
 
 ---
 
@@ -55,6 +58,7 @@
 |---|---|
 | `init` | Core schema: users, customers, products, orders, order items, payments, inventory ledger |
 | — | Auth (first-user ADMIN, JWT), users, customers, products, inventory adjustments, orders + lifecycle, payments, dashboard, seed, Swagger |
+| — | Frontend: auth, dashboard, orders (phone + desktop layouts), customers, products, inventory, users, Playwright journey |
 
 ---
 

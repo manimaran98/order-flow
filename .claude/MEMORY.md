@@ -9,6 +9,8 @@
 | Spec | docs/superpowers/specs/2026-09-29-orderflow-backend-foundation-design.md |
 | Plan | docs/superpowers/plans/2026-09-29-orderflow-backend-foundation.md |
 | Schema | backend/prisma/schema.prisma |
+| Frontend spec | docs/superpowers/specs/2026-09-29-orderflow-frontend-design.md |
+| Frontend plan | docs/superpowers/plans/2026-09-29-orderflow-frontend.md |
 
 ## Patterns
 - Guarded `updateMany` + count check for state changes; CHECK constraints as backstop.
