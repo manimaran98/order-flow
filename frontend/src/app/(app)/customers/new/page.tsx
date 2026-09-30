@@ -1,0 +1,14 @@
+import { createCustomer } from '@/actions/customers';
+import { PageHeader } from '@/components/common/page-header';
+import { CustomerForm } from '@/components/customers/customer-form';
+
+export const metadata = { title: 'New customer' };
+
+export default function NewCustomerPage() {
+  return (
+    <>
+      <PageHeader title="New customer" />
+      <CustomerForm action={createCustomer} submitLabel="Save customer" />
+    </>
+  );
+}
