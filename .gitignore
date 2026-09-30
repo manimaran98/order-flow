@@ -9,3 +9,7 @@ backend/src/generated/
 .DS_Store
 .superpowers/
 *.tsbuildinfo
+frontend/.next/
+frontend/playwright-report/
+frontend/test-results/
+.env.local
