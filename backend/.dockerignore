@@ -1,5 +1,11 @@
 node_modules
 dist
 coverage
+test
 src/generated
+*.tsbuildinfo
+*.log
 .env
+.env.*
+Dockerfile*
+.dockerignore
