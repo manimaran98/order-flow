@@ -98,7 +98,7 @@ Decisions worth a closer look, with where to find them.
   - Migrations run as a one-off Fargate task (`backend-migrate` image) before the services update. If the migration fails, the deploy stops and the running version keeps serving.
   - The ECS deployment circuit breaker rolls a service back if its new tasks never become healthy.
 - **HTTPS is optional, switched on with two variables.** Set `DOMAIN_NAME` (plus `ROUTE53_ZONE_ID` if the domain is on Route 53) and Terraform requests an ACM certificate. Once it's issued, set `HTTPS_ENABLED=true`: that adds a TLS 1.2/1.3 listener, redirects port 80 to HTTPS, and marks the session cookie `Secure`. `terraform test` checks both modes against a mocked AWS provider.
-- **Health checks.** The API serves `/health`. The frontend's `/api/health` Route Handler always answers 200 and reports whether the API is up or down, so an API outage doesn't get healthy frontend containers killed. The Docker `HEALTHCHECK`s use these endpoints. The ALB still checks `/login` until a frontend image with `/api/health` is deployed.
+- **Health checks.** The API serves `/health`. The frontend's `/api/health` Route Handler always answers 200 and reports whether the API is up or down, so an API outage doesn't get healthy frontend containers killed. The Docker `HEALTHCHECK`s and the ALB target group use these endpoints.
 
 ## Testing
 
