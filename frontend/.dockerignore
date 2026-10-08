@@ -2,6 +2,7 @@ node_modules
 .next
 coverage
 e2e
+playwright.config.ts
 playwright-report
 test-results
 *.tsbuildinfo
