@@ -88,8 +88,8 @@ run "no_domain_is_plain_http" {
   }
 
   assert {
-    condition     = aws_lb_target_group.frontend.health_check[0].path == "/api/health"
-    error_message = "Health check uses /api/health."
+    condition     = aws_lb_target_group.frontend.health_check[0].path == "/login"
+    error_message = "Health check stays on /login until /api/health is deployed."
   }
 }
 

@@ -17,10 +17,10 @@ resource "aws_lb_target_group" "frontend" {
   vpc_id               = aws_vpc.main.id
   deregistration_delay = 30
 
-  # A static route that answers 200 without calling the API, so an API outage
-  # doesn't get healthy frontend tasks replaced.
+  # Stays on /login until a frontend with the /api/health Route Handler is
+  # deployed; switching first would fail the checks and cycle the tasks.
   health_check {
-    path                = "/api/health"
+    path                = "/login"
     matcher             = "200"
     interval            = 15
     healthy_threshold   = 2

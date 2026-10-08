@@ -21,3 +21,6 @@ infra/**/.terraform/
 *.tfvars
 !*.tfvars.example
 crash.log
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/
