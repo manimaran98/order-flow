@@ -28,6 +28,9 @@ export const withOutstanding = <T extends { total: Prisma.Decimal; paidAmount: P
   outstandingAmount: order.total.sub(order.paidAmount),
 });
 
+/** Above this many name matches, order search falls back to a join (see customerNameFilter). */
+export const MAX_SEARCH_CUSTOMER_IDS = 1000;
+
 type StockWarning = { productId: string; sku: string; requested: number; available: number };
 
 @Injectable()
@@ -46,7 +49,7 @@ export class OrdersService {
       ...(q.search && {
         OR: [
           { orderNumber: { contains: q.search, mode: 'insensitive' } },
-          { customer: { name: { contains: q.search, mode: 'insensitive' } } },
+          await this.customerNameFilter(q.search),
         ],
       }),
       ...((q.from || q.to) && {
@@ -173,6 +176,25 @@ export class OrdersService {
     if (r.count === 1) return;
     if (!(await this.prisma.order.count({ where: { id } }))) throw new NotFoundException('Order not found');
     throw new ConflictException('Only PENDING orders without payments can be deleted; cancel it instead');
+  }
+
+  /**
+   * "Customer name contains `search`" as an order filter. A relation filter becomes a LEFT JOIN whose
+   * OR with the order-number match no index can serve (a full join of every order). Resolving the
+   * matching customers first (trigram index) lets Postgres BitmapOr two indexes instead. Broad terms
+   * that match many customers keep the join, so the IN list stays small. Same rows either way:
+   * neither form excludes soft-deleted customers. See docs/perf/query-optimisation.md.
+   */
+  private async customerNameFilter(search: string): Promise<Prisma.OrderWhereInput> {
+    const matches = await this.prisma.customer.findMany({
+      where: { name: { contains: search, mode: 'insensitive' } },
+      select: { id: true },
+      take: MAX_SEARCH_CUSTOMER_IDS + 1,
+    });
+    if (matches.length > MAX_SEARCH_CUSTOMER_IDS) {
+      return { customer: { name: { contains: search, mode: 'insensitive' } } };
+    }
+    return { customerId: { in: matches.map((c) => c.id) } };
   }
 
   /** Merges duplicate lines, snapshots prices, rejects missing/inactive products, and reports stock shortfalls. */

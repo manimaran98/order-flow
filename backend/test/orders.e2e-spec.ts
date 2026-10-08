@@ -1,3 +1,4 @@
+import { MAX_SEARCH_CUSTOMER_IDS } from '../src/orders/orders.service.js';
 import { api, createTestApp, prismaOf, TestApp } from './utils/app.js';
 import { bearer, setupUsers } from './utils/auth.js';
 import { resetDb } from './utils/db.js';
@@ -135,6 +136,31 @@ describe('orders', () => {
     expect((await list(`?customerId=${customer.id}`)).body.meta.total).toBe(1);
     expect((await list('?paymentStatus=PAID')).body.meta.total).toBe(0);
     expect((await list('?limit=1&page=2')).body.meta).toEqual({ page: 2, limit: 1, total: 2, totalPages: 2 });
+  });
+
+  it('searches customer names the same way whether few or many customers match', async () => {
+    // More name matches than MAX_SEARCH_CUSTOMER_IDS switches the service to its join-based filter.
+    await prismaOf(app).customer.createMany({
+      data: Array.from({ length: MAX_SEARCH_CUSTOMER_IDS + 1 }, (_, i) => ({ name: `Kedai Bulk ${i}` })),
+    });
+    const bulk = await createCustomer(app, t.staff, { name: 'Kedai Bulk Final' });
+    const rare = await createCustomer(app, t.staff, { name: 'Kedai Rare Sdn Bhd' });
+    const gone = await createCustomer(app, t.staff, { name: 'Kedai Rare Closed' });
+    const items = [{ productId: coke.id, quantity: 1 }];
+    const bulkOrder = await createOrder(app, t.staff, { customerId: bulk.id, items });
+    const rareOrder = await createOrder(app, t.staff, { customerId: rare.id, items });
+    const goneOrder = await createOrder(app, t.staff, { customerId: gone.id, items });
+    await api(app).delete(`/customers/${gone.id}`).set(bearer(t.admin)).expect(204);
+    const ids = async (search: string) =>
+      (await api(app).get('/orders').query({ search }).set(bearer(t.staff)).expect(200)).body.data.map(
+        (o: { id: string }) => o.id,
+      );
+
+    expect(await ids('kedai bulk')).toEqual([bulkOrder.id]); // join path
+    // ID-list path; like the join, it still finds orders of soft-deleted customers.
+    expect(await ids('KEDAI RARE')).toEqual([goneOrder.id, rareOrder.id]);
+    expect(await ids('kedai')).toEqual([goneOrder.id, rareOrder.id, bulkOrder.id]);
+    expect(await ids(rareOrder.orderNumber.slice(-6))).toEqual([rareOrder.id]); // no customer name matches
   });
 
   it('filters by several statuses at once', async () => {
