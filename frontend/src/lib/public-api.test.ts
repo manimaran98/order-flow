@@ -71,25 +71,27 @@ describe('getCatalog', () => {
 });
 
 describe('getCatalogItem', () => {
+  const ID = '0b0f6f3e-3c1a-4d2b-9a4e-5f6a7b8c9d0e';
+
   it('returns the product', async () => {
     fetchMock.mockResolvedValue(json(200, item('Milo')));
-    await expect(getCatalogItem('abc')).resolves.toMatchObject({ name: 'Milo' });
-    expect(String(fetchMock.mock.calls[0][0])).toBe('http://api.test/catalog/abc');
+    await expect(getCatalogItem(ID)).resolves.toMatchObject({ name: 'Milo' });
+    expect(String(fetchMock.mock.calls[0][0])).toBe(`http://api.test/catalog/${ID}`);
   });
 
   it.each([404, 400])('returns null for a %i', async (status) => {
     fetchMock.mockResolvedValue(json(status, { message: 'nope' }));
-    await expect(getCatalogItem('abc')).resolves.toBeNull();
+    await expect(getCatalogItem(ID)).resolves.toBeNull();
   });
 
-  it('escapes the id into a single path segment', async () => {
-    fetchMock.mockResolvedValue(json(404, {}));
-    await getCatalogItem('../users');
-    expect(String(fetchMock.mock.calls[0][0])).toBe('http://api.test/catalog/..%2Fusers');
+  // Public route: junk ids must not each cost an API call (and an ISR cache entry's worth of work).
+  it.each(['abc', '../users', `${ID}x`, ''])('returns null for malformed id %p without calling the API', async (id) => {
+    await expect(getCatalogItem(id)).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('rethrows other failures', async () => {
     fetchMock.mockResolvedValue(json(500, { message: 'boom' }));
-    await expect(getCatalogItem('abc')).rejects.toMatchObject({ status: 500 });
+    await expect(getCatalogItem(ID)).rejects.toMatchObject({ status: 500 });
   });
 });

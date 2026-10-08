@@ -1,5 +1,6 @@
 import 'server-only';
 import { PHASE_PRODUCTION_BUILD } from 'next/constants';
+import { unstable_rethrow } from 'next/navigation';
 import { ApiError, apiUrl, toApiError, type Query } from './api';
 import type { CatalogItem, Paginated } from './types';
 
@@ -48,16 +49,25 @@ export async function getCatalog(): Promise<CatalogItem[] | null> {
       });
       items.push(...res.data);
       if (page >= res.meta.totalPages) break;
+      if (page === CATALOG_MAX_PAGES) {
+        console.warn(`Catalog truncated at ${items.length} of ${res.meta.total} products (CATALOG_MAX_PAGES)`);
+      }
     }
     return items;
   } catch (err) {
+    unstable_rethrow(err); // never turn a Next.js internal signal into a cached placeholder
     if (isBuildPhase()) return null;
     throw err;
   }
 }
 
+// Same shape ParseUUIDPipe accepts on the API.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** One active product, or null when it is missing, inactive or the id is malformed. */
 export async function getCatalogItem(id: string): Promise<CatalogItem | null> {
+  // A public route: reject junk ids here rather than spend an API call on each one.
+  if (!UUID.test(id)) return null;
   try {
     return await publicApiFetch<CatalogItem>(`/catalog/${encodeURIComponent(id)}`);
   } catch (err) {
