@@ -1,0 +1,646 @@
+
+### O1 orders.list page 1, no filter: rows  | median 0.016 ms
+Limit  (cost=0.42..2.44 rows=20 width=169) (actual time=0.008..0.012 rows=20 loops=1)
+  Buffers: shared hit=15
+  ->  Index Scan Backward using orders_created_at_idx on orders o  (cost=0.42..20224.28 rows=200000 width=169) (actual time=0.008..0.011 rows=20 loops=1)
+        Buffers: shared hit=15
+Planning Time: 0.024 ms
+Execution Time: 0.025 ms
+
+### O1c orders.list page 1, no filter: count  | median 13.464 ms
+Aggregate  (cost=6140.30..6140.31 rows=1 width=8) (actual time=14.250..14.251 rows=1 loops=1)
+  Buffers: shared hit=160
+  ->  Index Only Scan using orders_payment_status_idx on orders  (cost=0.29..3640.30 rows=200000 width=16) (actual time=0.015..8.257 rows=200000 loops=1)
+        Heap Fetches: 0
+        Buffers: shared hit=160
+Planning Time: 0.037 ms
+Execution Time: 14.287 ms
+
+### O2 orders.list status=PENDING: rows  | median 0.106 ms
+Limit  (cost=304.40..304.45 rows=20 width=169) (actual time=0.094..0.096 rows=20 loops=1)
+  Buffers: shared hit=41
+  ->  Sort  (cost=304.40..305.65 rows=500 width=169) (actual time=0.094..0.095 rows=20 loops=1)
+        Sort Key: created_at DESC
+        Sort Method: top-N heapsort  Memory: 35kB
+        Buffers: shared hit=41
+        ->  Index Scan using orders_status_idx on orders o  (cost=0.30..291.09 rows=500 width=169) (actual time=0.008..0.042 rows=466 loops=1)
+              Index Cond: (status = ('PENDING'::cstring)::"OrderStatus")
+              Buffers: shared hit=41
+Planning Time: 0.031 ms
+Execution Time: 0.119 ms
+
+### O2c orders.list status=PENDING: count  | median 0.048 ms
+Aggregate  (cost=19.30..19.31 rows=1 width=8) (actual time=0.043..0.043 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Index Only Scan using orders_status_idx on orders  (cost=0.30..13.05 rows=500 width=16) (actual time=0.010..0.028 rows=466 loops=1)
+        Index Cond: (status = ('PENDING'::cstring)::"OrderStatus")
+        Heap Fetches: 0
+        Buffers: shared hit=3
+Planning Time: 0.019 ms
+Execution Time: 0.061 ms
+
+### O3 orders.list paymentStatus=UNPAID,PARTIAL: rows  | median 0.028 ms
+Limit  (cost=0.42..15.71 rows=20 width=169) (actual time=0.009..0.020 rows=20 loops=1)
+  Buffers: shared hit=19
+  ->  Index Scan Backward using orders_created_at_idx on orders o  (cost=0.42..22724.28 rows=29733 width=169) (actual time=0.009..0.018 rows=20 loops=1)
+        Filter: (payment_status = ANY (ARRAY[('UNPAID'::cstring)::"PaymentStatus", ('PARTIAL'::cstring)::"PaymentStatus"]))
+        Rows Removed by Filter: 10
+        Buffers: shared hit=19
+Planning Time: 0.030 ms
+Execution Time: 0.034 ms
+
+### O3c orders.list paymentStatus=UNPAID,PARTIAL: count  | median 1.993 ms
+Aggregate  (cost=984.60..984.61 rows=1 width=8) (actual time=2.162..2.163 rows=1 loops=1)
+  Buffers: shared hit=27
+  ->  Index Only Scan using orders_payment_status_idx on orders  (cost=0.30..612.93 rows=29733 width=16) (actual time=0.012..1.197 rows=29785 loops=1)
+        Index Cond: (payment_status = ANY (ARRAY[('UNPAID'::cstring)::"PaymentStatus", ('PARTIAL'::cstring)::"PaymentStatus"]))
+        Heap Fetches: 0
+        Buffers: shared hit=27
+Planning Time: 0.031 ms
+Execution Time: 2.183 ms
+
+### O4 orders.list search="siew" (common name, 7k orders): rows  | median 0.603 ms
+Limit  (cost=0.71..255.54 rows=20 width=169) (actual time=0.056..0.552 rows=20 loops=1)
+  Buffers: shared hit=1315
+  ->  Nested Loop Left Join  (cost=0.71..86083.86 rows=6756 width=169) (actual time=0.056..0.550 rows=20 loops=1)
+        Filter: ((o.order_number ~~* '%siew%'::text) OR ((j0.name ~~* '%siew%'::text) AND (j0.id IS NOT NULL)))
+        Rows Removed by Filter: 343
+        Buffers: shared hit=1315
+        ->  Index Scan Backward using orders_created_at_idx on orders o  (cost=0.42..20224.28 rows=200000 width=169) (actual time=0.007..0.055 rows=363 loops=1)
+              Buffers: shared hit=226
+        ->  Index Scan using customers_pkey on customers j0  (cost=0.29..0.31 rows=1 width=33) (actual time=0.001..0.001 rows=1 loops=363)
+              Index Cond: (id = o.customer_id)
+              Buffers: shared hit=1089
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.246 ms
+Execution Time: 0.578 ms
+
+### O4c orders.list search="siew": count  | median 151.775 ms
+Aggregate  (cost=7650.61..7650.62 rows=1 width=8) (actual time=153.023..153.026 rows=1 loops=1)
+  Buffers: shared hit=725 read=3866
+  ->  Hash Left Join  (cost=814.00..7566.16 rows=6756 width=16) (actual time=3.448..152.614 rows=7164 loops=1)
+        Hash Cond: (orders.customer_id = j0.id)
+        Filter: ((orders.order_number ~~* '%siew%'::text) OR ((j0.name ~~* '%siew%'::text) AND (j0.id IS NOT NULL)))
+        Rows Removed by Filter: 192836
+        Buffers: shared hit=725 read=3866
+        ->  Seq Scan on orders  (cost=0.00..6227.00 rows=200000 width=36) (actual time=0.003..13.564 rows=200000 loops=1)
+              Buffers: shared hit=361 read=3866
+        ->  Hash  (cost=564.00..564.00 rows=20000 width=33) (actual time=3.337..3.339 rows=20000 loops=1)
+              Buckets: 32768  Batches: 1  Memory Usage: 1529kB
+              Buffers: shared hit=364
+              ->  Seq Scan on customers j0  (cost=0.00..564.00 rows=20000 width=33) (actual time=0.002..1.142 rows=20000 loops=1)
+                    Buffers: shared hit=364
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.293 ms
+Execution Time: 153.367 ms
+
+### O5 orders.list search="kavitha a/l pillai" (rare name, 322 orders): rows  | median 76.560 ms
+Limit  (cost=7093.44..7095.77 rows=20 width=169) (actual time=64.670..66.756 rows=20 loops=1)
+  Buffers: shared hit=2613 read=2874
+  ->  Gather Merge  (cost=7093.44..7096.70 rows=28 width=169) (actual time=64.668..66.752 rows=20 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=2613 read=2874
+        ->  Sort  (cost=6093.41..6093.45 rows=14 width=169) (actual time=62.081..62.084 rows=16 loops=3)
+              Sort Key: o.created_at DESC
+              Sort Method: top-N heapsort  Memory: 35kB
+              Buffers: shared hit=2613 read=2874
+              Worker 0:  Sort Method: top-N heapsort  Memory: 35kB
+              Worker 1:  Sort Method: top-N heapsort  Memory: 35kB
+              ->  Hash Left Join  (cost=814.00..6093.15 rows=14 width=169) (actual time=4.418..61.902 rows=107 loops=3)
+                    Hash Cond: (o.customer_id = j0.id)
+                    Filter: ((o.order_number ~~* '%kavitha a/l pillai%'::text) OR ((j0.name ~~* '%kavitha a/l pillai%'::text) AND (j0.id IS NOT NULL)))
+                    Rows Removed by Filter: 66559
+                    Buffers: shared hit=2539 read=2874
+                    ->  Parallel Seq Scan on orders o  (cost=0.00..5060.33 rows=83333 width=169) (actual time=0.013..4.633 rows=66667 loops=3)
+                          Buffers: shared hit=1353 read=2874
+                    ->  Hash  (cost=564.00..564.00 rows=20000 width=33) (actual time=3.708..3.709 rows=20000 loops=3)
+                          Buckets: 32768  Batches: 1  Memory Usage: 1529kB
+                          Buffers: shared hit=1092
+                          ->  Seq Scan on customers j0  (cost=0.00..564.00 rows=20000 width=33) (actual time=0.007..1.333 rows=20000 loops=3)
+                                Buffers: shared hit=1092
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.324 ms
+Execution Time: 67.117 ms
+
+### O5c orders.list search="kavitha a/l pillai": count  | median 69.818 ms
+Aggregate  (cost=7096.86..7096.87 rows=1 width=8) (actual time=95.003..96.872 rows=1 loops=1)
+  Buffers: shared hit=3653 read=1818
+  ->  Gather  (cost=1814.00..7096.45 rows=33 width=16) (actual time=4.244..96.815 rows=322 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=3653 read=1818
+        ->  Hash Left Join  (cost=814.00..6093.15 rows=14 width=16) (actual time=4.813..92.089 rows=107 loops=3)
+              Hash Cond: (orders.customer_id = j0.id)
+              Filter: ((orders.order_number ~~* '%kavitha a/l pillai%'::text) OR ((j0.name ~~* '%kavitha a/l pillai%'::text) AND (j0.id IS NOT NULL)))
+              Rows Removed by Filter: 66559
+              Buffers: shared hit=3653 read=1818
+              ->  Parallel Seq Scan on orders  (cost=0.00..5060.33 rows=83333 width=36) (actual time=0.012..5.819 rows=66667 loops=3)
+                    Buffers: shared hit=2409 read=1818
+              ->  Hash  (cost=564.00..564.00 rows=20000 width=33) (actual time=3.699..3.699 rows=20000 loops=3)
+                    Buckets: 32768  Batches: 1  Memory Usage: 1529kB
+                    Buffers: shared hit=1092
+                    ->  Seq Scan on customers j0  (cost=0.00..564.00 rows=20000 width=33) (actual time=0.007..1.325 rows=20000 loops=3)
+                          Buffers: shared hit=1092
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.312 ms
+Execution Time: 97.254 ms
+
+### O6 orders.list search="150123" (one order by number): rows  | median 64.017 ms
+Limit  (cost=7093.44..7095.77 rows=20 width=169) (actual time=61.598..64.297 rows=1 loops=1)
+  Buffers: shared hit=4725 read=762
+  ->  Gather Merge  (cost=7093.44..7096.70 rows=28 width=169) (actual time=61.596..64.294 rows=1 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=4725 read=762
+        ->  Sort  (cost=6093.41..6093.45 rows=14 width=169) (actual time=59.005..59.007 rows=0 loops=3)
+              Sort Key: o.created_at DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=4725 read=762
+              Worker 0:  Sort Method: quicksort  Memory: 25kB
+              Worker 1:  Sort Method: quicksort  Memory: 25kB
+              ->  Hash Left Join  (cost=814.00..6093.15 rows=14 width=169) (actual time=47.708..58.882 rows=0 loops=3)
+                    Hash Cond: (o.customer_id = j0.id)
+                    Filter: ((o.order_number ~~* '%150123%'::text) OR ((j0.name ~~* '%150123%'::text) AND (j0.id IS NOT NULL)))
+                    Rows Removed by Filter: 66666
+                    Buffers: shared hit=4651 read=762
+                    ->  Parallel Seq Scan on orders o  (cost=0.00..5060.33 rows=83333 width=169) (actual time=0.020..4.218 rows=66667 loops=3)
+                          Buffers: shared hit=3465 read=762
+                    ->  Hash  (cost=564.00..564.00 rows=20000 width=33) (actual time=5.331..5.332 rows=20000 loops=3)
+                          Buckets: 32768  Batches: 1  Memory Usage: 1529kB
+                          Buffers: shared hit=1092
+                          ->  Seq Scan on customers j0  (cost=0.00..564.00 rows=20000 width=33) (actual time=0.009..1.873 rows=20000 loops=3)
+                                Buffers: shared hit=1092
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.340 ms
+Execution Time: 64.660 ms
+
+### O6c orders.list search="150123": count  | median 65.677 ms
+Aggregate  (cost=7096.86..7096.87 rows=1 width=8) (actual time=61.829..63.866 rows=1 loops=1)
+  Buffers: shared hit=5471
+  ->  Gather  (cost=1814.00..7096.45 rows=33 width=16) (actual time=26.035..63.859 rows=1 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=5471
+        ->  Hash Left Join  (cost=814.00..6093.15 rows=14 width=16) (actual time=47.385..59.164 rows=0 loops=3)
+              Hash Cond: (orders.customer_id = j0.id)
+              Filter: ((orders.order_number ~~* '%150123%'::text) OR ((j0.name ~~* '%150123%'::text) AND (j0.id IS NOT NULL)))
+              Rows Removed by Filter: 66666
+              Buffers: shared hit=5471
+              ->  Parallel Seq Scan on orders  (cost=0.00..5060.33 rows=83333 width=36) (actual time=0.005..3.907 rows=66667 loops=3)
+                    Buffers: shared hit=4227
+              ->  Hash  (cost=564.00..564.00 rows=20000 width=33) (actual time=3.739..3.740 rows=20000 loops=3)
+                    Buckets: 32768  Batches: 1  Memory Usage: 1529kB
+                    Buffers: shared hit=1092
+                    ->  Seq Scan on customers j0  (cost=0.00..564.00 rows=20000 width=33) (actual time=0.009..1.389 rows=20000 loops=3)
+                          Buffers: shared hit=1092
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.290 ms
+Execution Time: 64.221 ms
+
+### C1 customers.list page 1, no search: rows  | median 0.019 ms
+Limit  (cost=0.29..2.24 rows=20 width=154) (actual time=0.008..0.014 rows=20 loops=1)
+  Buffers: shared hit=21
+  ->  Index Scan using customers_name_idx on customers c  (cost=0.29..1912.09 rows=19617 width=154) (actual time=0.007..0.012 rows=20 loops=1)
+        Filter: (deleted_at IS NULL)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=21
+Planning Time: 0.012 ms
+Execution Time: 0.024 ms
+
+### C1c customers.list no search: count  | median 1.889 ms
+Aggregate  (cost=809.21..809.22 rows=1 width=8) (actual time=1.860..1.861 rows=1 loops=1)
+  Buffers: shared hit=364
+  ->  Seq Scan on customers  (cost=0.00..564.00 rows=19617 width=16) (actual time=0.002..1.278 rows=19617 loops=1)
+        Filter: (deleted_at IS NULL)
+        Rows Removed by Filter: 383
+        Buffers: shared hit=364
+Planning Time: 0.023 ms
+Execution Time: 1.867 ms
+
+### C2 customers.list search="lim" (common): rows  | median 7.177 ms
+Limit  (cost=0.29..77.80 rows=20 width=154) (actual time=7.930..7.942 rows=20 loops=1)
+  Buffers: shared hit=9553
+  ->  Index Scan using customers_name_idx on customers c  (cost=0.29..2062.09 rows=532 width=154) (actual time=7.929..7.939 rows=20 loops=1)
+        Filter: ((deleted_at IS NULL) AND ((name ~~* '%lim%'::text) OR (phone ~~ '%lim%'::text) OR (email ~~* '%lim%'::text)))
+        Rows Removed by Filter: 10114
+        Buffers: shared hit=9553
+Planning Time: 0.162 ms
+Execution Time: 7.990 ms
+
+### C2c customers.list search="lim": count  | median 10.291 ms
+Aggregate  (cost=720.65..720.66 rows=1 width=8) (actual time=10.408..10.409 rows=1 loops=1)
+  Buffers: shared hit=364
+  ->  Seq Scan on customers  (cost=0.00..714.00 rows=532 width=16) (actual time=0.022..10.386 rows=485 loops=1)
+        Filter: ((deleted_at IS NULL) AND ((name ~~* '%lim%'::text) OR (phone ~~ '%lim%'::text) OR (email ~~* '%lim%'::text)))
+        Rows Removed by Filter: 19515
+        Buffers: shared hit=364
+Planning Time: 0.163 ms
+Execution Time: 10.420 ms
+
+### C3 customers.list search="kavitha a/l pillai" (rare): rows  | median 11.916 ms
+Limit  (cost=714.06..714.07 rows=5 width=154) (actual time=12.097..12.099 rows=20 loops=1)
+  Buffers: shared hit=364
+  ->  Sort  (cost=714.06..714.07 rows=5 width=154) (actual time=12.095..12.097 rows=20 loops=1)
+        Sort Key: name
+        Sort Method: quicksort  Memory: 31kB
+        Buffers: shared hit=364
+        ->  Seq Scan on customers c  (cost=0.00..714.00 rows=5 width=154) (actual time=0.182..12.065 rows=27 loops=1)
+              Filter: ((deleted_at IS NULL) AND ((name ~~* '%kavitha a/l pillai%'::text) OR (phone ~~ '%kavitha a/l pillai%'::text) OR (email ~~* '%kavitha a/l pillai%'::text)))
+              Rows Removed by Filter: 19973
+              Buffers: shared hit=364
+Planning Time: 0.183 ms
+Execution Time: 12.143 ms
+
+### C3c customers.list search="kavitha a/l pillai": count  | median 12.422 ms
+Aggregate  (cost=714.06..714.07 rows=1 width=8) (actual time=13.244..13.246 rows=1 loops=1)
+  Buffers: shared hit=364
+  ->  Seq Scan on customers  (cost=0.00..714.00 rows=5 width=16) (actual time=0.172..13.235 rows=27 loops=1)
+        Filter: ((deleted_at IS NULL) AND ((name ~~* '%kavitha a/l pillai%'::text) OR (phone ~~ '%kavitha a/l pillai%'::text) OR (email ~~* '%kavitha a/l pillai%'::text)))
+        Rows Removed by Filter: 19973
+        Buffers: shared hit=364
+Planning Time: 0.178 ms
+Execution Time: 13.257 ms
+
+### C4 customers.list search="7712" (phone digits): rows  | median 10.578 ms
+Limit  (cost=714.06..714.07 rows=5 width=154) (actual time=10.364..10.366 rows=9 loops=1)
+  Buffers: shared hit=364
+  ->  Sort  (cost=714.06..714.07 rows=5 width=154) (actual time=10.363..10.364 rows=9 loops=1)
+        Sort Key: name
+        Sort Method: quicksort  Memory: 26kB
+        Buffers: shared hit=364
+        ->  Seq Scan on customers c  (cost=0.00..714.00 rows=5 width=154) (actual time=0.043..10.352 rows=9 loops=1)
+              Filter: ((deleted_at IS NULL) AND ((name ~~* '%7712%'::text) OR (phone ~~ '%7712%'::text) OR (email ~~* '%7712%'::text)))
+              Rows Removed by Filter: 19991
+              Buffers: shared hit=364
+Planning Time: 0.170 ms
+Execution Time: 10.405 ms
+
+### C4c customers.list search="7712": count  | median 10.537 ms
+Aggregate  (cost=714.06..714.07 rows=1 width=8) (actual time=10.430..10.431 rows=1 loops=1)
+  Buffers: shared hit=364
+  ->  Seq Scan on customers  (cost=0.00..714.00 rows=5 width=16) (actual time=0.042..10.424 rows=9 loops=1)
+        Filter: ((deleted_at IS NULL) AND ((name ~~* '%7712%'::text) OR (phone ~~ '%7712%'::text) OR (email ~~* '%7712%'::text)))
+        Rows Removed by Filter: 19991
+        Buffers: shared hit=364
+Planning Time: 0.170 ms
+Execution Time: 10.441 ms
+
+### C5 customers.findOne recent orders (include orders take 20; Prisma sends no LIMIT)  | median 1.279 ms
+Sort  (cost=2925.73..2929.06 rows=1333 width=136) (actual time=1.060..1.098 rows=1367 loops=1)
+  Sort Key: created_at DESC
+  Sort Method: quicksort  Memory: 208kB
+  Buffers: shared hit=1192
+  ->  Bitmap Heap Scan on orders o  (cost=22.75..2856.55 rows=1333 width=136) (actual time=0.220..0.781 rows=1367 loops=1)
+        Recheck Cond: (customer_id = '0186d86f-d865-e372-056b-57eab3d5ae64'::uuid)
+        Heap Blocks: exact=1188
+        Buffers: shared hit=1192
+        ->  Bitmap Index Scan on orders_customer_id_idx  (cost=0.00..22.42 rows=1333 width=0) (actual time=0.129..0.129 rows=1367 loops=1)
+              Index Cond: (customer_id = '0186d86f-d865-e372-056b-57eab3d5ae64'::uuid)
+              Buffers: shared hit=4
+Planning Time: 0.030 ms
+Execution Time: 1.184 ms
+
+### C6 customers.orders page 1: rows  | median 0.304 ms
+Limit  (cost=0.42..311.56 rows=20 width=120) (actual time=0.052..0.300 rows=20 loops=1)
+  Buffers: shared hit=1681
+  ->  Index Scan Backward using orders_created_at_idx on orders o  (cost=0.42..20737.61 rows=1333 width=120) (actual time=0.052..0.298 rows=20 loops=1)
+        Filter: (customer_id = '0186d86f-d865-e372-056b-57eab3d5ae64'::uuid)
+        Rows Removed by Filter: 2706
+        Buffers: shared hit=1681
+Planning Time: 0.030 ms
+Execution Time: 0.314 ms
+
+### C6c customers.orders: count  | median 0.111 ms
+Aggregate  (cost=52.41..52.42 rows=1 width=8) (actual time=0.112..0.112 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using orders_customer_id_idx on orders  (cost=0.42..35.75 rows=1333 width=16) (actual time=0.012..0.070 rows=1367 loops=1)
+        Index Cond: (customer_id = '0186d86f-d865-e372-056b-57eab3d5ae64'::uuid)
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning Time: 0.021 ms
+Execution Time: 0.122 ms
+
+### P1 products.list search="rendang": rows  | median 1.047 ms
+Limit  (cost=0.28..77.11 rows=20 width=119) (actual time=0.992..1.003 rows=20 loops=1)
+  Buffers: shared hit=1434
+  ->  Index Scan using products_name_idx on products p  (cost=0.28..388.28 rows=101 width=119) (actual time=0.992..1.002 rows=20 loops=1)
+        Filter: ((name ~~* '%rendang%'::text) OR (sku ~~* '%rendang%'::text))
+        Rows Removed by Filter: 1400
+        Buffers: shared hit=1434
+Planning Time: 0.102 ms
+Execution Time: 1.022 ms
+
+### P1c products.list search="rendang": count  | median 1.248 ms
+Aggregate  (cost=97.26..97.27 rows=1 width=8) (actual time=1.106..1.106 rows=1 loops=1)
+  Buffers: shared hit=66
+  ->  Seq Scan on products  (cost=0.00..96.00 rows=101 width=16) (actual time=0.020..1.102 rows=100 loops=1)
+        Filter: ((name ~~* '%rendang%'::text) OR (sku ~~* '%rendang%'::text))
+        Rows Removed by Filter: 1900
+        Buffers: shared hit=66
+Planning Time: 0.098 ms
+Execution Time: 1.112 ms
+
+### OD1 orders.findOne: order row  | median 0.016 ms
+Limit  (cost=0.42..8.44 rows=1 width=169) (actual time=0.005..0.006 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Index Scan using orders_pkey on orders o  (cost=0.42..8.44 rows=1 width=169) (actual time=0.005..0.005 rows=1 loops=1)
+        Index Cond: (id = '6f956e1e-4f96-8e7f-b0b5-69353a541164'::uuid)
+        Buffers: shared hit=4
+Planning Time: 0.020 ms
+Execution Time: 0.015 ms
+
+### OD2 orders.findOne: items  | median 0.023 ms
+Sort  (cost=16.32..16.32 rows=3 width=64) (actual time=0.008..0.008 rows=3 loops=1)
+  Sort Key: id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4
+  ->  Bitmap Heap Scan on order_items i  (cost=4.45..16.29 rows=3 width=64) (actual time=0.004..0.004 rows=3 loops=1)
+        Recheck Cond: (order_id = '6f956e1e-4f96-8e7f-b0b5-69353a541164'::uuid)
+        Heap Blocks: exact=1
+        Buffers: shared hit=4
+        ->  Bitmap Index Scan on order_items_order_id_product_id_key  (cost=0.00..4.45 rows=3 width=0) (actual time=0.003..0.003 rows=3 loops=1)
+              Index Cond: (order_id = '6f956e1e-4f96-8e7f-b0b5-69353a541164'::uuid)
+              Buffers: shared hit=3
+Planning Time: 0.022 ms
+Execution Time: 0.029 ms
+
+### OD3 orders.findOne: payments  | median 0.022 ms
+Sort  (cost=8.45..8.45 rows=1 width=88) (actual time=0.009..0.009 rows=1 loops=1)
+  Sort Key: paid_at
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4
+  ->  Index Scan using payments_order_id_idx on payments p  (cost=0.42..8.44 rows=1 width=88) (actual time=0.006..0.006 rows=1 loops=1)
+        Index Cond: (order_id = '6f956e1e-4f96-8e7f-b0b5-69353a541164'::uuid)
+        Buffers: shared hit=4
+Planning Time: 0.015 ms
+Execution Time: 0.023 ms
+
+### D1 dashboard today (live orders since KL midnight)  | median 0.061 ms
+Aggregate  (cost=437.34..437.35 rows=1 width=40) (actual time=0.055..0.055 rows=1 loops=1)
+  Buffers: shared hit=92
+  ->  Index Scan using orders_created_at_idx on orders  (cost=0.43..435.49 rows=123 width=22) (actual time=0.013..0.045 rows=140 loops=1)
+        Index Cond: (created_at >= (date_trunc('day'::text, (now() AT TIME ZONE 'Asia/Kuala_Lumpur'::text)) AT TIME ZONE 'Asia/Kuala_Lumpur'::text))
+        Filter: (status <> ('CANCELLED'::cstring)::"OrderStatus")
+        Rows Removed by Filter: 8
+        Buffers: shared hit=92
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.067 ms
+Execution Time: 0.069 ms
+
+### D2 dashboard unpaid (live orders not PAID: count, sum total, sum paid)  | median 29.536 ms
+Aggregate  (cost=9711.33..9711.34 rows=1 width=72) (actual time=30.057..30.058 rows=1 loops=1)
+  Buffers: shared hit=4227
+  ->  Seq Scan on orders  (cost=0.00..9227.00 rows=27676 width=28) (actual time=0.008..28.823 rows=15886 loops=1)
+        Filter: ((status <> ('CANCELLED'::cstring)::"OrderStatus") AND (payment_status <> ('PAID'::cstring)::"PaymentStatus"))
+        Rows Removed by Filter: 184114
+        Buffers: shared hit=4227
+Planning Time: 0.061 ms
+Execution Time: 30.072 ms
+
+### D3 dashboard pendingOrders  | median 0.052 ms
+Aggregate  (cost=19.30..19.31 rows=1 width=8) (actual time=0.069..0.069 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Index Only Scan using orders_status_idx on orders  (cost=0.30..13.05 rows=500 width=16) (actual time=0.010..0.054 rows=466 loops=1)
+        Index Cond: (status = ('PENDING'::cstring)::"OrderStatus")
+        Heap Fetches: 0
+        Buffers: shared hit=3
+Planning Time: 0.019 ms
+Execution Time: 0.082 ms
+
+### D4 dashboard awaitingFulfilment  | median 0.100 ms
+Aggregate  (cost=40.51..40.52 rows=1 width=8) (actual time=0.082..0.083 rows=1 loops=1)
+  Buffers: shared hit=7
+  ->  Index Only Scan using orders_status_idx on orders  (cost=0.31..29.01 rows=920 width=16) (actual time=0.012..0.052 rows=971 loops=1)
+        Index Cond: (status = ANY (ARRAY[('CONFIRMED'::cstring)::"OrderStatus", ('PACKING'::cstring)::"OrderStatus", ('READY'::cstring)::"OrderStatus"]))
+        Heap Fetches: 0
+        Buffers: shared hit=7
+Planning Time: 0.030 ms
+Execution Time: 0.095 ms
+
+### D5 dashboard completedOrders (DELIVERED, ~170k rows)  | median 12.440 ms
+Aggregate  (cost=6134.50..6134.51 rows=1 width=8) (actual time=14.283..14.284 rows=1 loops=1)
+  Buffers: shared hit=147
+  ->  Index Only Scan using orders_status_idx on orders  (cost=0.30..3825.25 rows=184740 width=16) (actual time=0.016..8.450 rows=184664 loops=1)
+        Index Cond: (status = ('DELIVERED'::cstring)::"OrderStatus")
+        Heap Fetches: 0
+        Buffers: shared hit=147
+Planning Time: 0.047 ms
+Execution Time: 14.318 ms
+
+### D6 dashboard lowStockProducts  | median 0.103 ms
+Aggregate  (cost=98.94..98.95 rows=1 width=8) (actual time=0.104..0.104 rows=1 loops=1)
+  Buffers: shared hit=66
+  ->  Seq Scan on products  (cost=0.00..91.00 rows=635 width=16) (actual time=0.007..0.100 rows=86 loops=1)
+        Filter: (is_active AND (stock_quantity <= low_stock_threshold))
+        Rows Removed by Filter: 1914
+        Buffers: shared hit=66
+Planning Time: 0.016 ms
+Execution Time: 0.107 ms
+
+### PAY1 payments.list page 1: rows  | median 0.016 ms
+Limit  (cost=0.42..1.91 rows=20 width=88) (actual time=0.007..0.010 rows=20 loops=1)
+  Buffers: shared hit=6
+  ->  Index Scan Backward using payments_paid_at_idx on payments p  (cost=0.42..17266.42 rows=231237 width=88) (actual time=0.006..0.008 rows=20 loops=1)
+        Buffers: shared hit=6
+Planning Time: 0.013 ms
+Execution Time: 0.020 ms
+
+### PAY1c payments.list: count  | median 15.954 ms
+Aggregate  (cost=8463.83..8463.84 rows=1 width=8) (actual time=16.327..16.328 rows=1 loops=1)
+  Buffers: shared hit=3261
+  ->  Seq Scan on payments  (cost=0.00..5573.37 rows=231237 width=16) (actual time=0.003..9.330 rows=231237 loops=1)
+        Buffers: shared hit=3261
+Planning Time: 0.058 ms
+Execution Time: 16.340 ms
+
+### INV1 inventory.ledger page 1: rows  | median 0.035 ms
+Limit  (cost=4.44..85.07 rows=20 width=100) (actual time=0.018..0.019 rows=20 loops=1)
+  Buffers: shared hit=24
+  ->  Incremental Sort  (cost=4.44..1044.55 rows=258 width=100) (actual time=0.017..0.018 rows=20 loops=1)
+        Sort Key: created_at DESC, id DESC
+        Presorted Key: created_at
+        Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+        Buffers: shared hit=24
+        ->  Index Scan Backward using inventory_transactions_product_id_created_at_idx on inventory_transactions t  (cost=0.42..1032.94 rows=258 width=100) (actual time=0.007..0.011 rows=21 loops=1)
+              Index Cond: (product_id = 'c984e09c-331f-836a-dcf4-d9ae0353d1bb'::uuid)
+              Buffers: shared hit=24
+Planning Time: 0.033 ms
+Execution Time: 0.036 ms
+
+### INV1c inventory.ledger: count  | median 0.039 ms
+Aggregate  (cost=16.17..16.18 rows=1 width=8) (actual time=0.036..0.036 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using inventory_transactions_product_id_created_at_idx on inventory_transactions  (cost=0.42..12.94 rows=258 width=16) (actual time=0.013..0.027 rows=261 loops=1)
+        Index Cond: (product_id = 'c984e09c-331f-836a-dcf4-d9ae0353d1bb'::uuid)
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning Time: 0.027 ms
+Execution Time: 0.047 ms
+
+### INV2 inventory.lowStock  | median 0.140 ms
+Sort  (cost=120.56..122.15 rows=635 width=59) (actual time=0.117..0.120 rows=86 loops=1)
+  Sort Key: stock_quantity
+  Sort Method: quicksort  Memory: 32kB
+  Buffers: shared hit=66
+  ->  Seq Scan on products p  (cost=0.00..91.00 rows=635 width=59) (actual time=0.008..0.104 rows=86 loops=1)
+        Filter: (is_active AND (stock_quantity <= low_stock_threshold))
+        Rows Removed by Filter: 1914
+        Buffers: shared hit=66
+Planning Time: 0.017 ms
+Execution Time: 0.132 ms
+
+### R0 orders.list search: customer-name lookup ("siew", 595 ids)  | median 6.197 ms
+Limit  (cost=645.67..647.35 rows=674 width=16) (actual time=6.192..6.234 rows=595 loops=1)
+  Buffers: shared hit=364
+  ->  Sort  (cost=645.67..647.35 rows=674 width=16) (actual time=6.190..6.207 rows=595 loops=1)
+        Sort Key: id
+        Sort Method: quicksort  Memory: 38kB
+        Buffers: shared hit=364
+        ->  Seq Scan on customers  (cost=0.00..614.00 rows=674 width=16) (actual time=0.004..6.096 rows=595 loops=1)
+              Filter: (name ~~* '%siew%'::text)
+              Rows Removed by Filter: 19405
+              Buffers: shared hit=364
+Planning Time: 0.111 ms
+Execution Time: 6.294 ms
+
+### R4 orders.list search="siew" rewritten: rows  | median 0.204 ms
+Limit  (cost=1.91..56.28 rows=20 width=169) (actual time=0.037..0.181 rows=20 loops=1)
+  Buffers: shared hit=226
+  ->  Index Scan Backward using orders_created_at_idx on orders o  (cost=1.91..21725.77 rows=7991 width=169) (actual time=0.036..0.179 rows=20 loops=1)
+        Filter: ((order_number ~~* '%siew%'::text) OR (customer_id = ANY ('{0063eea2-c702-2239-649f-5ecbb140a749,008a0f3b-f668-8780-5665-f94a403382fb,0186d86f-d865-e372-056b-57eab3d5ae64,018b53f2-7800-ae25-cf19-f1d54f3339a4,0210c55c-0c01-5f17-62f3-c274791748a7,0250ecd2-ec3c-c45f-1ec2-89f77a9b9c9f,02d275f0-170e-a651-cfc6-526b2b01fff1,030c3da4-818a-4580-f30e-9ef530156092,04339dba-d314-a70e-b92d-2a5b145856ae,0442e545-06fd-591c-52a7-90fd981fb040,052bb782-0d95-f1cd-a3e0-4327c4afdf32,0546e5eb-7072-c932-c271-1c19053e34a6,056066b1-80dc-0907-bf75-a8ecbad22d8e,05b366f5-943c-41fb-6a6a-f56304d6a91b,05d4797d-2055-b29b-411b-8e4086f6b3cb,05d8a39c-7227-8a46-1353-916b9f44f507,06209cd8-47fe-af2d-13f3-c0344e2cf289,06532970-e1d4-3f0a-ef72-cc9138d066ec,07296957-fae4-48ec-4a1c-81f122ef227c,076ed4c8-8274-d1fb-aa1d-90f5e73f8843,07738259-3987-d210-bbbb-44495ac90e44,078121e8-70f1-52c1-4b6c-6641fc880395,079c507c-5fdc-ad47-a8c8-d50abb42efd1,07fc8546-09fd-75f1-7217-f3037e5bd035,0809de01-636d-4a54-ae3d-ecacc2cf8564,082abc5e-2320-e57a-1c1b-668a1b8d4913,0847868b-5b01-2472-b2bb-60936c1ecbdd,089a60fd-cafb-028e-2ffa-9210d3d49d2e,08cf2781-5404-9159-037a-8ea2f1506ef0,08f4cc0e-3923-2594-9a20-eb6fe49627d0,0a0987a5-d501-3813-06b1-cab14587e358,0a9c0dd8-0c42-d3c5-7bd2-81074131a58d,0b556650-d6c8-faab-3276-b2339142007c,0bfe1d64-f3b0-4b83-d7aa-1d077c9a370a,0c175bdf-3c97-a2db-d5a8-38cc93665d04,0c587320-9666-b138-de21-3fc5aff6a7ec,0ce0e2eb-3308-d6a3-7cce-c50ed98b13a0,0e2a1960-d9df-65cf-9626-f22a65f167fb,0e46d85a-4558-9bb8-f23f-d983d15953ab,0e6847d7-bbe4-0095-7f97-de17c972046f,0fe895ec-23fe-635e-947e-29728536bde3,101933c3-a13d-35d8-d097-d03060a44227,107d6686-738a-b816-0fee-2bf157187bfa,10af39b9-0409-bf13-d736-20c24ae869ab,111871cc-7f52-55e9-d89e-471d95729efd,11b2f545-3289-759b-e5d8-9182f69e5da9,120a32ad-13bd-5d76-bb69-ce3d11011497,1245d499-2200-b964-2ff6-bb98a20b86c0,12ce716f-a2b9-80c6-719e-2e3f2dd153ac,12d95839-fc69-5d51-03d7-e268809a0ae7,12e4d45f-18c8-a6fa-e0c9-4b7aea4c691c,13187a34-b894-d103-6461-247ec199b2c9,13866de7-0545-c93c-8499-ce16f0a60188,13885cca-202e-1078-cc04-08d84e180967,13ce3d48-b4df-2559-b08e-c64bf1298f74,15e4d4fc-0e37-e0ef-d81d-61f30f2ab975,16f9a2c2-5215-c133-386b-d846a265e006,17042b64-c3cf-04dc-2ec1-df17fcc2c4f0,17371827-e4e5-0341-9607-fc8725970576,179d5513-2ee1-7d50-b5a9-1f462a5a13c0,18491318-4556-1c8e-2c38-4ec3fd207aeb,1a5b721a-0a0d-e709-74da-5907b7b60eeb,1a7090c9-2035-e558-9013-df2027a4701a,1b02deef-fac3-64d9-5790-2ee851ece949,1b1080a9-b695-b921-7481-111579541893,1b4f3833-5ac0-62f0-bf05-dc6b40597fa5,1b8d5022-78e5-c465-67d2-73b25cb0a297,1bd5c1bf-8e6a-b7df-b230-27cfa5611678,1bef982d-9f46-e54c-adad-80135844174a,1cd5a0f0-e554-6980-ac0e-325d9e0359ac,1cfe3719-5e92-6fe4-6927-cb41eb044715,1d5b9dac-cb84-a0ed-af0a-b4d3abb3eaf3,1dddb4ac-7678-84f6-d267-310d847468e9,1df4388f-49d0-2388-07bf-a3bc95452cc7,1e2d3d07-996b-dc9e-25d5-bb68495505d2,1fec413b-8766-c561-0ee7-c8e02d28932b,2250fcb2-49e1-e81b-b839-cf8a30545354,225857ae-2cde-5943-b403-d2e2923b62cd,228c576c-5d51-cb6a-49bf-887e8d0e46fb,23006bc5-f072-8177-087e-80c0782fa76a,23187992-a6c9-62d9-d11c-2e1d6f14106a,23261537-cb4c-314e-62dd-052a403704a0,23280c52-129a-d9ac-000e-0dd6930419d7,24987ca8-a8b4-734f-0a00-745c0430b92e,25b9c235-674c-1829-2739-e906d8b527c9,25dba24c-ae0d-b8ad-95f9-66861bf54605,263a2922-de0c-0a71-661c-11d9715f7edd,268e2f61-b320-225f-3b48-6bfda1c54fa8,26d4a4d0-9ad3-1ea4-207e-6bdaeb46a6b4,27025204-98cf-f9ee-1c17-1bf63469c6a5,274333a8-aad8-8a86-dbd4-d27e3df97893,27f88979-52a9-4a9d-0115-9b4e1fdab552,28b29dcb-51a7-5c77-e6a0-5331ccccdf3b,2943421d-72e2-4516-a06e-6367b1f105e0,2a35e7fe-bbe7-e2d2-479f-b8d3c4ed6c48,2a85166e-b208-ff92-208f-6e166f0e3f32,2b595ced-c518-7871-6579-81792d6c6292,2b5ab709-3e3b-6e4b-4846-9e183b50e15a,2b89c83f-6f57-0bac-8cdc-dd479b54c23f,2b8fedc8-fc00-5064-67c7-b7d8fe5984b2,2bb2964f-4826-389f-aaf2-d019bd2b7b69,2bc33b57-5962-2944-a0d9-10ca5095a6af,2bcc81a3-4bea-b103-9642-2a64b4be9bed,2c4243f4-3dea-6406-da97-f6a66246d8c8,2c4aedc0-3972-c3ec-d541-6a317fc534eb,2ccc5dd3-2d03-ae41-7374-27c27d55ed1c,2cedf1ad-f4e6-3947-8603-396b0d5ab7a2,2d74f058-a971-ac05-aa40-e0f96488745b,2d830969-fe6c-8490-4f3e-105019358dc7,2de4f80d-d6ab-7432-b54e-6c1d9bb96c34,2e0baded-60ab-a0af-a0ba-0ef0980db340,2e398717-7b94-2353-18d8-3c7ecf17dff7,2eb28873-aee1-1f0b-2a4d-0db3f81e673f,2ebf49ba-d590-473a-53ab-02e0b3e7bdc6,2ed63f4a-8061-50e9-64f9-4fd87a8e65c6,2effe1b7-88db-39a3-ef45-865d45f8d014,2fe8bb2c-2634-f8be-9566-153a04f1ead8,302b4633-6932-eaf7-d815-0ff517b56887,308b497a-3e2b-f69c-d26d-0dddc6812e20,31000c00-91c2-1d21-1309-27473016108f,3107fc27-a1d0-482e-8aea-7d83101dedc0,32252b5e-d468-c05d-8a3f-3ba852b6f2de,325386df-2c84-0efa-1167-74557d625535,32ab4af7-f7a6-3e07-99d4-79fc7027a868,32f3c7c2-7fff-3a4f-0783-883d904fd6fb,33610408-9a48-32e0-3324-a6073b269798,33850f61-73a1-6ff8-f2f2-0c2925995b38,33b19af0-bcbf-8ea4-8296-f6da7d5fb670,33b4ac53-4c97-4cd6-8a1b-5ae20019fc93,369131bb-2107-78e8-45af-63ffb5375f2e,36a4a654-c1d2-ef4d-9537-3864d9726dfe,36cfa946-fb78-3621-1b47-3aa55df7e406,379ed4b7-1ab3-8e07-eda9-ca3cedd83505,38479e5c-1f2c-a8a3-1937-cc73d9338918,3893153f-5296-063f-3158-4fdadc886b36,39a39d27-041d-4554-1c42-0c5472c3a04b,39e6ba2b-1b5f-6d7f-1b21-58236d0a8c2b,3a6687d9-edd2-2916-9491-37af03d1579f,3a94030a-9d03-78d6-e23f-0e1b0c668684,3b3eed58-a412-fe3d-3c73-3f4f98ce4321,3be84110-e60a-3f45-ff96-4cc6b7b89aa1,3bf78de9-4374-7b22-001f-90aa9b73a6cf,3c93496c-a31e-19d3-93f0-e1cc06ac8d6b,3c9a3be9-de54-cc0a-0ee0-6f40cbe2e325,3cd6271a-41ca-3e6f-0d76-b8166df684fc,3d222aaf-0429-7abd-ae50-5ac411584f31,3d3ea78c-410f-ae43-6414-4388ef94a095,3d4a8f22-780e-b118-6576-c5dd043f8e21,3da4b072-64f0-24e0-eb4e-2f54f3dc149e,3e08e43a-5363-d1b8-bdb0-d6e165b852a6,3e751046-2270-d31a-b004-cb9527205df3,3e7ac760-28c2-d270-6559-433848578b9b,40afe6f8-f9b6-c045-2f86-bf9c609e2c9a,41804fd5-eb01-5f57-7897-93b048f9abcc,41982734-c45d-a0ef-6bad-8e4a1e62d1b2,42456e60-1338-d4b6-cf0f-4d691ad6d162,427074a4-9501-2d76-fba4-4910f55f3481,42846e36-aaf2-1b3b-b5f1-cb0d81ad5f7b,42b333d6-b932-5dff-08f0-56a4a10ddec6,4354d8e4-a292-98fe-1a18-51b2efa1be7c,448fa654-6184-d9cc-1f33-fc7e4cbacd94,46568955-aba8-dfad-3243-469e1155ce0b,46c8bfa0-3d4f-36d2-2b92-7eaaa73043bd,47adcc09-36cf-c7cb-c16c-85641c08c37d,47c0ac76-5240-f56c-9217-e32ce6412064,47da3e8f-804b-64cf-8347-e416ac42d4d9,47fb2237-0fce-c331-349c-3a47a44db9b8,4830b143-df6d-9de2-1025-db3deebb862b,4830bcf6-77b3-6d97-7779-08c3a40ccdb9,48c3816e-dc68-0a16-7fbb-0c84a840f4f8,48cf6fbb-9d38-514d-4b9f-5610bedf79f9,49f511ae-f387-358b-2841-56e39e319874,4a94f131-b1bb-d416-6f24-2b0660b73545,4ab19806-4eb9-17d7-aa6a-de8ba7aed20a,4b891326-ed58-b750-69fc-a6aabb47ea73,4b9367e8-b6f1-55d0-cad9-2ff86d7a7acc,4bca8555-da3e-9364-6b58-d91bc0488c12,4d644e3b-ee44-6cd4-7151-5c51695b9e3a,4d836a04-07c9-4c6a-a2b3-c9e292dc15d9,4e05fa05-cd6f-ed8d-ce0c-805c774dc3bb,4e6ba1ec-997f-cec4-b85d-e08d4244b6f1,4e9338e8-5a05-12d2-2115-9b3a43beb97e,4eac0077-206b-e936-b0f8-4a876562a8c1,4ecca986-27c5-568f-b718-3eaf98fe2096,4fec2eb2-d888-d8bb-76c5-3d031430b7a9,507cd9ed-96e6-7c8d-e96b-afe244bbe680,5181f28c-bc47-8387-19b5-2a413a54fadb,518578ca-a455-84a1-a486-681338a409a7,51dd0309-fe31-df19-c3f8-295d4d8efd83,5252330b-9cb1-ec79-2f92-9c1dd129d201,52614c0f-c9d9-12ce-785b-4fb0b7ec1d16,5299d781-1927-060e-bd7b-9fb35555c39e,53d66664-b402-9f17-4aa4-b6bf9c67f306,545be64f-788d-a23d-c0ae-cd5a20002118,54ca7434-7f29-9c04-2459-036f4740007c,561dfbf2-1df3-85b9-21e2-5e7a514100f8,56411606-cc55-fa93-c52b-a610fb141b84,567b48c6-fa39-c6e0-b2f7-b4d79ed88cfd,56bf718e-b139-1254-9eb6-42d129ef8ee2,57e7f436-3f56-e116-2981-bb58500e413d,58d60933-a45e-7958-2653-e3a1f6ec7430,59293dc7-3032-b7b0-e8e5-8a92709c503e,593369d2-c395-8617-c52e-c9faf9459fb0,59894e25-0c08-e687-8619-9b42ff121da4,5a5b8047-2790-40b4-65bc-ba551bc31766,5a96e3ba-4a27-adee-8cbb-e7f048ed65e4,5b6a80c4-f334-5812-70ad-52424826d4d9,5bcceb27-079b-73ca-1477-8230b840162c,5be634f3-d36f-6b3c-4cf0-b4dcf97ee91c,5bf23cd4-5954-01ad-f810-d9e22484d802,5c30b20d-e1e0-77d9-01f4-e8534140037e,5c71c35d-6235-c996-f6b7-c982744edfb7,5d305500-8fec-ea1c-208e-a04e206e1749,5d38ee24-81a1-50e0-e29d-3f858c437399,5d6557fd-915f-cd87-a83d-27dcf68ac3b2,5db497cb-7848-5471-30a3-72a6a86b7f12,5de91e76-767e-6b2a-0713-c01327a27514,5e1346e3-54c9-f337-d2df-fb78364b94fe,5ef0b369-84d7-ec0a-4627-cfb55f3acf81,5f3b4517-58b9-ac71-9a52-9656fb0dad20,60177175-ff43-4a53-cda7-c0dcf4df85cf,601e9e9b-a3e8-e20c-c203-f77d6ac1dc63,6133e412-41c4-2b14-c563-0a4698ec87ca,616087a7-80e1-cdf7-b739-1b6c6aa06ee6,61614318-9532-5f30-22ea-6c5afb3e309c,61633537-de5c-3b1e-cace-fcdbfcc33199,61af90fd-c421-f55c-5b3b-0e49839f4f67,622fc4fa-ccd6-adc2-4fb2-9f5925d60608,6234e24f-e97b-b601-abb0-e93c00c95c72,644b9170-99eb-996e-2909-f49c53484caf,64773a0b-d170-9d28-9b49-d52480de8c11,649efc92-68f1-8705-91e5-92ae033bfbfc,64e467e0-c584-e59a-83b1-d993a20554ca,6521e091-9931-30d6-e617-7874e2233afe,65291f52-1ea0-45a7-0889-5cde323beb4f,655129b9-622c-98bf-6ab9-5e7c67336e8d,658e06ef-ec97-bc31-46da-7d3d783ecc77,65da72d2-a211-184f-ef0e-02d57623abfd,6621c9cc-28aa-15a2-0f2f-7e70985584dd,666f2370-5496-753b-6242-c486220efc1e,6799f82c-7b85-0cd2-90da-7d06371aafd6,679e32f3-6361-e944-e20b-4fdd2ad90f19,6808ce9e-8da5-cb33-52e2-33926533068c,686f4330-7f6d-3512-7cea-f38051617fcf,6a5ef429-d213-0906-6763-6010249de3fd,6a7686d2-ad21-a70b-419f-0204d66968e5,6a9be807-9533-0ed6-591f-26cee7b93b7b,6c4754f1-298e-5f8d-d22e-5ebe26856db9,6cd8a9e2-2755-4f85-40a4-7991f0e58375,6cef7895-e3a0-d3c1-9952-0f767c85b4dc,6d0725b4-fd75-e2a0-6f2c-061390662c5b,6dd35f6a-299a-321d-aa9a-5cfdba6e2adf,6de125ea-c469-6bc7-bfe6-32eda1f4f45f,6e62dcc7-50a9-32cb-4e91-1a1cbd37c670,6e7d0785-ace5-a7c0-beb8-393a6622c56d,6ed46aff-5160-550a-c50c-eeddfe199bbb,6ee4cf3b-658e-e4bc-0641-e1bf0c4d535a,6f0cdd68-1b0d-c5fd-075a-9f7542217e07,6f1ea62a-e7a0-a969-ba19-be574cd04708,6f582671-f874-8a2c-845c-f83d650d7ca0,6fc994c1-b9d0-ae07-c36a-cf906aec12ab,7012a37b-7ab2-63f8-f174-eb37fa222d8a,711e2007-4907-d382-8835-c46b054b7b48,7255ad7c-cc52-fa2b-e688-7b776f68a534,7256bc09-ec0e-2a76-a58d-fb50ecc69784,72eb3b94-d725-46dd-3c94-99eee8c69b5d,73262d4c-c112-a23e-2a7c-433aa0055154,73449abe-e5e9-f7ae-4c64-18ee781f03ee,734b2943-b32e-c978-11f3-1217cc7db9fb,73ddecae-fec6-0f32-4385-19fc946435ad,73eea67e-83cc-cd54-a4cc-7f49d10e6220,74763a32-dd73-acf1-7fe1-91951e732f10,753e6636-702a-fbab-ba72-0ad9205fd40b,76c69591-354d-e0ab-ebef-c8a08c20e2c0,77a25c8f-de1e-c658-a36c-b9ad91818a99,7941454e-09b7-7171-a4bf-a8936849ad42,7a2270b7-8391-02e3-1f08-2659b47670a2,7a7528dd-ee60-fabc-0ba9-c0ac67a4d9d1,7ae0cf77-c989-4b0e-b888-16f5b98fa339,7b356513-5bfc-a2d6-e5bf-8c6fd7fb38d6,7bd0bfe1-15a8-bf38-e3c1-4925018fddc7,7bd9e654-a0a7-c21b-ea53-cf36cfeddfb3,7c3686b8-1faa-4071-dfc4-149f4c3978ae,7c44defb-64bf-1135-93bf-f7bc6c0be63f,7c80fe76-d0fc-da69-a35f-42523c4bc6d2,7c864747-16fc-fce4-994f-3f0a3909f7e9,7c8f70ec-0756-0f8b-36ea-4ea608a7e553,7cc26c3a-96d3-d302-a533-13237dd1aed6,7d081823-c830-6e7e-b0cf-b450ece99fd0,7d18dccd-3332-15e8-a7c5-e5d517479b5a,7d9801b9-516f-995f-f3e7-5c1ffd207b6d,7d99c860-ba75-b437-cef8-5184048b1097,7e1479c1-d150-2457-b9f5-f3be218f2def,7e26354e-c3cf-142c-afe2-a6ec4a6e57d9,7e5bf7ca-0b63-58ec-ef80-05e1bc4e49b9,7e60fcf0-8386-9ac4-19df-14b88ab5b5a3,7ee25a8b-2a7c-d1a2-f63c-33df17b6a7bf,7f15c229-0171-5f97-0990-342253f377b8,7f60b600-bd05-112e-c75d-1c3c83c39685,804ffa1e-5c94-1be9-8dbe-3def7cf4f5f4,80806c01-75fe-2094-ed25-cca80361ba3a,80c95997-ea63-eb76-35b9-f357a260f841,80d7d5d6-00ca-01e9-c2d8-a6d86f578cec,81090560-f955-cf7b-d90b-45d4155c86e5,8151aab0-4de7-5cdb-6a1a-91a1f680b279,81fa6f9c-2471-5f73-19e6-1b60a36538d2,822b79ed-b9a5-e70b-99ff-368a3c9e2cd2,8294f081-cf1d-e5b9-fc5c-e138abda1e24,82cf601a-b870-994c-a3a7-c7ae5c361952,83098380-e8a9-4edc-3482-550e311b79c4,8322512b-6107-dff6-0726-748a021b704e,838604eb-2b73-21f0-d116-9fcc3cb4cb67,84795d9f-42d9-cb47-2b38-2569188c2c75,84923ad1-c16e-f39d-2ce6-78b127d6fb32,849715eb-baff-09fe-518a-15841b9ed982,84cd06fd-c2ea-34b2-c442-725d5acd1dfb,85044608-bdc2-2e71-3d93-30352d08692a,852bdb5e-3a0f-5aa7-66bb-389d5e9829a1,854884f1-e63c-1a37-2884-3ac59d2ca956,856112b5-4523-d499-a680-84964b7885cb,860ffa07-0706-1d2d-2991-ce6328b4fd6b,863a69fb-ca9d-ba64-cc10-d970e0e64e1d,86f2c2fc-e04e-6559-62fd-ddb54b6a25b7,87698ce0-0a08-2b5c-482b-987fc0668591,87afcb66-3ea4-2458-27a1-c7f48db309ff,884f3a49-73e9-6112-91f4-8fe973d0ac68,8855747b-a8d5-0a3d-953a-7dd352154291,89db3547-15dc-cbd1-91da-c4b2dae5a548,8a042daf-1086-98f2-a5d5-2ea66b98b95f,8a10ac7e-e71f-836d-2816-4d1e3fe7d293,8aed56cf-5b3c-18b3-0077-c0a750591000,8af5acba-b4f7-d458-9e6e-fea954d8d27e,8b8968d3-c007-de63-7c57-951f7c449633,8b954935-5fdc-9262-4523-101add9b5388,8baa1c4c-35d8-cbc2-dcf0-96c73f191614,8bf38faa-73d8-90cc-aaff-c99a2b883695,8d2f314e-dd8f-b32f-fe75-9874da46e736,8d8e5e9a-a27d-848f-5853-175c78f4bf23,8d93d7b3-9412-4b18-9c6f-52fe60fce0c0,8dbcb5e8-c86a-5aab-112a-fa3f09cba449,8dd43181-9415-b0f3-517b-6201a524163e,8df7b836-d6db-ad0e-6ae6-fc64ce69fc11,8e08fd35-263b-fc36-af9b-54aac8da8253,8e4dcd23-5b4e-eb46-69d2-af122f0c3968,8e8f375d-6cc4-c044-709b-d3b1d36b153d,8eea9a7f-0ad3-ddbd-8735-0b32385d1ffc,8f022931-9ceb-8f95-c41f-2222ab621d23,8f34fa22-1aba-6d97-331e-77df6b342776,904b6724-2548-94de-54b4-a9c64e4797d2,92391e03-2f2e-8f7d-9e82-b572666759e8,928545f9-ff12-3467-5dcf-2f87cb56be7c,92c71384-d1f7-badb-48ae-dd2925562dca,92cf1cbe-533d-2db2-9e8e-59c7da725823,931f199d-2c46-3be7-3498-0c434fe0ef2b,94b9fc34-c3cc-6d4d-5bf2-1ac24940bca5,94fc6548-0c51-247f-7f0d-11343a639bc5,951043fb-bbf2-23b5-88fe-0f992e0fad4b,9633db4c-c4bc-d9d9-c2fb-461e37c76e51,975d05dc-d0c4-fc32-fbf1-ed882001edf4,976dc71e-3a6b-ced8-f07a-9652b97afdf4,977afc22-1ddb-beb5-c5e3-c98ba0f61821,984046f9-f34b-f7a3-7255-8b623ab8ed1e,98787bbf-fead-0f56-350a-ae7bcb4b7514,987e6559-2b1d-087f-eac7-39eb32c60f42,995f54a6-3122-be0c-c6e1-4b7e354ff59d,998f3c1b-bbe5-49a3-b790-a522da4d8863,9a013172-58bf-bd20-2d46-2c3050647e8b,9ab0f050-1845-d782-92ef-d5c1ab97d17b,9ab7229f-c02a-2b71-7039-6b8e9ef1e80a,9aee71d2-3c53-e3ca-fc5b-46af17b1c4dc,9be73e42-2536-3e75-61c3-e79953ac98f7,9c4d5e8f-1e25-be76-b5cb-1b6cf1aa3595,9c7d61ba-b0aa-519c-169a-c3793f8151c2,9d0ad730-b502-a51e-9beb-fba8020dd3aa,9d2e47aa-33fe-b9fb-acf9-92bf34997b68,9d3913b5-7ce7-6aac-8524-19b6560c7e3f,9d618444-1e67-23e7-a531-315d3716fbe7,9d93deb5-6a63-5bba-60b0-5a608f5839f8,9da4508e-1210-4eb8-640c-0c5219401ce5,9de41273-adf6-a498-82e2-8fa999a25080,9e3f6836-185a-5f6e-0f0f-adf1c7b6cb1a,9e498616-494e-30da-4dc2-0664c4401c3b,9e949773-6b5d-be2c-17ef-c1e35eea8e8a,9f094ecc-333a-878c-d8da-fee7520fa927,9fef4744-1ed4-d851-6b11-8fc9d1a52fce,a0982066-ee85-5b94-7947-19565709251b,a09d42f4-5e0a-2702-9bf7-10bc5601c87f,a0a12a21-b300-5104-bee2-0cdb2cc36824,a1646d8c-6972-545e-795c-f8acfb216df3,a1dd3895-ef3c-de00-54f9-c04a6e625485,a39b58a9-e359-d860-8b1b-e62da2a05c60,a4561604-603d-ee80-8252-02df94547be8,a4acc112-a6bf-7be0-589e-4298acc29a58,a5402dfa-05fa-f12a-2c8f-3e90812a9b5c,a598fa24-3742-3e9f-5af2-8f83cb0b027d,a6655c05-0542-517c-58dd-e33b476bf6e1,a7a25599-e21c-f8c4-1c6b-afdf7774819e,a7cc9ffc-c96a-c72c-75a1-6beca0097e7a,a8691440-0fa1-2c97-f83f-2163583c270d,a91031e7-327b-2004-b57b-c7daacd52911,aa34d7de-d107-212b-6f4c-f7bc0315020b,aa7a0c1a-c185-2883-3b3a-07fe85902f8f,aa9301a1-8db6-1b11-b6db-551e2bf8f877,aa9d40c7-bbe9-8e8e-e335-b92a59fc8cea,ab40ccc5-cde7-57c0-1f19-2b58aa4a64a6,ac67550c-6be1-a936-fc08-74c332d40541,ac88fdff-d94d-7de7-acdc-8ed3e152eebb,ad1479ec-bcaf-dd81-1afe-1de0a747b306,ada0de4c-81f9-985b-2ab1-180a9a04aa8a,adc9e9c2-92dd-afde-892b-ce80a7e49068,af5e7ee4-f5a6-47c3-8ac5-86d49110ab62,afd8fcda-1391-4b12-96c7-3321c06ac5c0,b16a6d5e-44a4-3bd3-606c-8a82f0be8fd3,b2050c3a-4530-e170-9159-9edfdf6d821c,b251ca4b-8ad4-2734-b8b2-7bde772e738e,b25d8a06-bec1-647c-feed-94be380b66bf,b2959da8-9e8b-dc48-b7e0-cf0306078bbf,b37214ba-6a9d-2ceb-1876-917fc53a9648,b41a68b1-a264-7344-dd44-365e35f17818,b43daa29-cd02-6e1d-2f18-09e77fad654a,b45c18a4-9f56-a8f8-2ddc-3e4a9303bf56,b57fe0ac-780d-7006-cdf0-592c8b6b88ed,b588426d-2e98-6c7c-f62c-64ab7be1af75,b5bdbfcd-dde6-7b6a-433a-d9e09df3d697,b5cdd415-f162-4c6a-211b-01b6cbf8257a,b60e276d-4fec-98c6-a27f-958f56ed361c,b6542ece-d7aa-9f9b-be05-3ae2d7fd1260,b6664e91-104c-6d7e-0b71-db9ce248fc99,b6d48a81-e6c5-acc4-f599-dfe6bcd56cfc,b71e438b-3026-9bd9-67d1-6d47ddf3d690,b7984574-0f68-4eed-06c1-9235341930b0,b7aababd-4ec9-de51-df1e-2fea9e776b4f,b8023b2f-05c9-901f-ba50-f99de0f09520,b812efb7-bea1-ee1a-f85e-f2419ae37c50,b84d1bf7-94b2-8485-ff92-4f2ef63398a2,b8621469-f450-582a-bd46-d5b0f6ad3c5b,b87d17af-d6b6-8082-08d8-0fb13383664b,b8c1be95-d33f-9081-8d80-d08067570148,b8f42e22-51b7-7e69-6c67-9abef5e85cb7,b9353059-70b2-164c-4e2c-140f51979430,b94b6817-53b6-9988-af01-be3fc5346109,ba4ace9f-4139-7f5b-847b-906838822160,ba748e15-6ce8-76af-7af1-bd9cf25597ee,ba8705d0-1fd2-f760-8dc0-a49737604582,bab056c6-5e26-9815-402c-1b6ca156830b,bac61894-9845-e6a5-4490-3d1e201703e8,bae53689-6eba-8d97-e7d5-9973450fe310,bc2d61d2-4165-6867-c6c0-2645ca0a6895,bc3aa265-c818-5f38-dbef-84dc7a755f69,bc6ddb6f-5985-4998-f17c-587b1e752963,bc91b732-fe2e-4cb2-8cd3-09e809a62032,bcae07e9-d0e1-6caa-2510-aab730eb6d62,bd4766b3-cf25-825a-2c74-8e491f20b76e,bde50ff2-8f8a-5357-00b5-7bafda406fe0,be6d9360-2bea-85ea-3c20-eee67645eb9c,bf548dcb-4bde-cc39-f816-cabf11fbed0b,bf769449-8b81-f2df-fe81-2601ca0cd43b,c0736b07-a1ad-4b17-5aef-06f31cda0e57,c08790dd-8a97-f525-e7ba-994601b0e0ae,c0a40599-08a7-2a6d-dee9-f9bc8c57715c,c19c7391-7ccb-f570-9a39-9e28e8e04150,c1c3d4f5-fe63-93ea-914e-591ad88d4903,c27e2488-ae96-28d5-f813-d0cdd5d13e76,c281154b-d696-eea0-2acc-c13ecb7d82c9,c2e6e322-d424-39b0-e9f3-d4fcc17c4d7e,c3079ff4-c1b3-ca45-dae2-83b1ebfe9136,c34726af-158c-d27c-f995-c48199cf7950,c48b9fdd-6505-b0d5-7f08-61318f5cf264,c4ed739c-902b-ba8b-f4da-418f56499519,c503c108-0546-25b8-7c3d-9cc11dbfa2fc,c5bc9ba6-83ee-0802-9471-a791eedaaa04,c5c0186f-4482-938b-0be0-535d6ba6ab98,c5d1679f-d826-5487-8465-f28b63ba1df9,c610bbe9-8fd6-d9d4-96b3-7b95de5ba133,c6556573-87a5-d8d0-d729-946e4b1ec83a,c6e97a3c-39e2-8bdf-5e24-2824ca0e94c7,c78829ef-418c-17e0-717c-9274209e3a11,c9532709-bfe2-5dcc-4134-d4764ba304a3,c957f060-2e94-f18f-874f-d450b6189735,c9582357-f2cb-34e8-0c2b-39a3265280d5,cab9c4e5-7d7b-53bf-1dd7-071b0cf49198,cb0183b4-0197-5540-83a8-497a94a384a5,cb9e4f09-f653-f9c4-a5da-3277ff864d1d,cba94c5f-7b16-a0ac-00e4-36612531cd9e,cbfa0645-ad77-78c2-b459-f9baf8d0a915,cc787e16-b41f-a9ce-1dd3-809e5eb486c3,cd33a885-df43-900a-8d1c-67a7f9c71536,cd46de3c-0979-0728-698e-3329342b3001,ce1b855a-71ec-ca6e-d562-e4fdffdd3d78,ce44fb39-d9c4-0553-62c7-27f314d7fdd6,ce90e052-9e96-0d62-754e-d32e16693c27,cedc0d47-3389-b9d2-6ea1-17099e3e9d4f,cee9f5b9-d824-5548-280b-7ff40e93184c,cf11fe87-f13c-fa6f-40ae-7e9d36730fa2,cf5774ba-d4f7-73f0-d646-4afad9d59557,d01255c3-9561-fec4-e958-edead085573f,d05fc349-11fb-fe4f-84dc-e1251437065d,d0a26d5e-5536-3c66-8ba4-c44aa118f82c,d0b8ac17-570b-a2ce-e515-2409db1d0371,d13f34e8-58e3-eef7-2899-8c467bcdea58,d17627bd-4019-b68e-4733-a1acc9e3b253,d1a700ec-51ad-a9a8-0120-6130643f4ae5,d1f49fb9-7a73-5ecf-e729-3d5c761ac8d6,d2c343aa-0142-96a7-c5a0-58194b37ec76,d3072d56-ecf5-a15e-afb1-146664f6d2b6,d343b3d8-6a3a-ce7b-69f8-5755399f931f,d4bfc2fd-61ce-6ee7-46e5-24225893b692,d4f1f3aa-740a-a80d-0189-0f316011e514,d6d62eca-cb86-4037-d06a-c0d179c162c5,d71c3386-dad1-3ffc-6dd2-4a7702dbf723,d7a45a18-4203-4d50-e6b0-82cdb0218df1,d7f35517-b0a1-7608-bb0e-4b762bdd415e,d81073fd-467a-7aac-b1a8-ba249907593f,d8893e7a-ef58-b740-cdb6-fc871d278a97,d98133e4-d631-07de-353a-3bd25262e8b5,d984cca2-52d8-5fb1-0e8e-bfffa60411ef,d989583a-f6da-d229-cf9d-7102a8893bb7,d9b784b6-7d33-9467-fa61-83c77a7ea790,da222d32-125e-1c4c-6d7d-a80072d57f48,da440537-68ab-10e3-6e36-7986ce683aa8,db05c850-3d1f-6eb8-13f4-1db17d7aa99c,db3ad39b-7a12-b589-fd9a-e0e39fe82a29,db77a490-90d4-8072-88e3-4415fe9c8922,db93b881-cb7a-610f-6858-7e4dca176df9,dbcef2ea-032d-3df6-2d34-93cf20b6f2d8,dc2194c3-9f75-c507-b21e-8a4470aff057,dc6bdf39-b695-1010-1050-67ce10cbab75,dcdfd554-fdef-bfbb-3b6a-6507020fd163,dd7cc137-745c-fa2c-f0f7-747cdd6e259a,dda1efda-6f6f-69a3-8dd8-bc4e75b1671b,dde28a23-3bd8-99a7-118e-43c6092a40c0,de2df517-bd58-fe7c-17cc-76ed420e30ea,de4433ec-2d95-25ee-40e3-12085adfe62d,df1ae111-2cdb-9d34-30e8-9261642061f3,df4981fd-16f4-8d07-cac0-d8b3d6bc1925,df5a8da4-9dd5-ac02-dfcf-256c42ddfb9c,df6e4f90-b92d-4f09-72ea-7b751dff7bea,e159f17d-5de4-b30f-73e4-fc659f7f3a68,e30cd08e-015a-496c-a3fa-79fdece663d0,e30e9322-c315-2ba0-645b-37ec371fff51,e473c2b1-6977-9578-e3a2-f1e1c2ce86a6,e540ad4d-dac6-fd06-619d-108f3e66c02b,e5705ce2-6a30-c2f0-b2b1-6797db3fbd9e,e6dc8675-7e41-c5a2-21e9-4fd8f939d3ec,e721250d-b553-c9df-4ce4-2198f100902b,e77dcb88-3ce8-f3df-62d5-54fe97c9dc1b,e77f5df0-0b78-a414-87c8-fa7d9de2a1e1,e7b88a25-e0df-62ff-d3bc-420d389678d0,e7e96702-5029-0dab-c79c-82cad0e299af,e8917f9d-c00b-ea6f-3e29-06ab3a8a22f0,e8be10d3-1622-ce5d-1009-7ecaf716494e,e9050c43-af96-b835-5ea2-692edcd360ac,e92c43c7-29db-7318-b6ac-d5f417a25725,e958f8f4-11f4-3aa9-6ac7-090c80053398,e9b61905-9694-69bd-828f-37177a037990,e9bbedbf-57ab-1c02-0eaa-99bba2194cfd,ea092e69-253f-98c6-55c9-e99755af023f,eaae0b78-7e23-8b2f-644d-0db20d114873,eadaef5f-0599-2cb2-7f1c-8981a96732d7,eadfa68b-7d93-ab6d-e0d2-bd88609feaf7,ecc46f41-2eb6-33b1-dba1-6ba4d1b0020b,ed0e80d6-cf11-15ff-d4eb-06580d1ee9b5,ed14028c-b88a-2235-0f80-a42860750a00,ed251596-32db-26b7-90f1-7a4f0e9d76bd,ed2f1f40-9cd6-7b9f-4b2a-e0f40ede87f6,ed8e8b40-3456-116a-94e6-c695bece7b4f,ed8f3b1d-f4f4-9bd9-ddef-fbbe7261212e,ee5e3286-ddda-432c-abf8-f38777bc83e6,ef0b61d0-ba62-8fa2-f5d6-47ba00776a73,efeb0711-8a5a-fe5c-b728-cc990bc7a37e,f034c60a-ca9c-c83b-1a8d-db2f46cb18aa,f0485a7b-dadb-7f38-7ecc-e7501b087b64,f0fa10b1-f8ac-44d9-d9c2-7525732dda8a,f1c57d1e-3df9-d1d9-807d-72d87040e6b6,f367ee56-625e-33a2-19e6-f89cec563c8d,f3bb72ed-5959-4c9f-aac0-ac5d27d31b47,f441be38-2c4d-7db5-7d66-83df40ddca74,f50e1db0-bc3e-672b-973d-b911a5da0484,f54cf7b6-f03e-3c86-db4b-4c10a9cb52cb,f7623ed9-3793-6380-a178-a772f0a98141,f796b4ad-f170-7593-079a-24f6c4c69f19,f7972b59-af92-7f12-199e-8d59c1178d04,f86a51ec-c00f-a673-f098-b4287b4762de,f8701319-41d4-2c73-af7d-614d0e1e78b2,f969564d-29c3-048d-0801-1a610f99c474,fa313f83-f52e-e264-0de4-579fb0325689,fb6368f9-794a-0c68-c6bc-04a4ce5831ec,fb679056-7510-434b-4fa4-89a952ea89e0,fbf9b14f-5d47-aaf1-9b94-db2e00d288be,fbfc5f57-8c5e-21e2-9c66-f73a9ac5bb27,fcfbf31d-66b2-6b1f-dd75-982aa9d0a701,fd706b70-acd2-aba3-3e0f-7ce4776b6343,fe95bc01-8e3e-6180-9f4a-be14a1c3d8fb,ff6dc18e-9e6b-fdbb-fd3a-3fa1f2d465f0,ffbe7f80-5bc2-fefe-28b2-a69994f938f0}'::uuid[])))
+        Rows Removed by Filter: 343
+        Buffers: shared hit=226
+Planning Time: 0.717 ms
+Execution Time: 0.209 ms
+
+### R4c orders.list search="siew" rewritten: count  | median 29.242 ms
+Aggregate  (cost=7585.81..7585.82 rows=1 width=8) (actual time=29.203..31.279 rows=1 loops=1)
+  Buffers: shared hit=4227
+  ->  Gather  (cost=1001.49..7485.92 rows=7991 width=16) (actual time=0.525..31.012 rows=7164 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=4227
+        ->  Parallel Seq Scan on orders  (cost=1.49..5686.82 rows=3330 width=16) (actual time=0.036..26.217 rows=2388 loops=3)
+              Filter: ((order_number ~~* '%siew%'::text) OR (customer_id = ANY ('{0063eea2-c702-2239-649f-5ecbb140a749,008a0f3b-f668-8780-5665-f94a403382fb,0186d86f-d865-e372-056b-57eab3d5ae64,018b53f2-7800-ae25-cf19-f1d54f3339a4,0210c55c-0c01-5f17-62f3-c274791748a7,0250ecd2-ec3c-c45f-1ec2-89f77a9b9c9f,02d275f0-170e-a651-cfc6-526b2b01fff1,030c3da4-818a-4580-f30e-9ef530156092,04339dba-d314-a70e-b92d-2a5b145856ae,0442e545-06fd-591c-52a7-90fd981fb040,052bb782-0d95-f1cd-a3e0-4327c4afdf32,0546e5eb-7072-c932-c271-1c19053e34a6,056066b1-80dc-0907-bf75-a8ecbad22d8e,05b366f5-943c-41fb-6a6a-f56304d6a91b,05d4797d-2055-b29b-411b-8e4086f6b3cb,05d8a39c-7227-8a46-1353-916b9f44f507,06209cd8-47fe-af2d-13f3-c0344e2cf289,06532970-e1d4-3f0a-ef72-cc9138d066ec,07296957-fae4-48ec-4a1c-81f122ef227c,076ed4c8-8274-d1fb-aa1d-90f5e73f8843,07738259-3987-d210-bbbb-44495ac90e44,078121e8-70f1-52c1-4b6c-6641fc880395,079c507c-5fdc-ad47-a8c8-d50abb42efd1,07fc8546-09fd-75f1-7217-f3037e5bd035,0809de01-636d-4a54-ae3d-ecacc2cf8564,082abc5e-2320-e57a-1c1b-668a1b8d4913,0847868b-5b01-2472-b2bb-60936c1ecbdd,089a60fd-cafb-028e-2ffa-9210d3d49d2e,08cf2781-5404-9159-037a-8ea2f1506ef0,08f4cc0e-3923-2594-9a20-eb6fe49627d0,0a0987a5-d501-3813-06b1-cab14587e358,0a9c0dd8-0c42-d3c5-7bd2-81074131a58d,0b556650-d6c8-faab-3276-b2339142007c,0bfe1d64-f3b0-4b83-d7aa-1d077c9a370a,0c175bdf-3c97-a2db-d5a8-38cc93665d04,0c587320-9666-b138-de21-3fc5aff6a7ec,0ce0e2eb-3308-d6a3-7cce-c50ed98b13a0,0e2a1960-d9df-65cf-9626-f22a65f167fb,0e46d85a-4558-9bb8-f23f-d983d15953ab,0e6847d7-bbe4-0095-7f97-de17c972046f,0fe895ec-23fe-635e-947e-29728536bde3,101933c3-a13d-35d8-d097-d03060a44227,107d6686-738a-b816-0fee-2bf157187bfa,10af39b9-0409-bf13-d736-20c24ae869ab,111871cc-7f52-55e9-d89e-471d95729efd,11b2f545-3289-759b-e5d8-9182f69e5da9,120a32ad-13bd-5d76-bb69-ce3d11011497,1245d499-2200-b964-2ff6-bb98a20b86c0,12ce716f-a2b9-80c6-719e-2e3f2dd153ac,12d95839-fc69-5d51-03d7-e268809a0ae7,12e4d45f-18c8-a6fa-e0c9-4b7aea4c691c,13187a34-b894-d103-6461-247ec199b2c9,13866de7-0545-c93c-8499-ce16f0a60188,13885cca-202e-1078-cc04-08d84e180967,13ce3d48-b4df-2559-b08e-c64bf1298f74,15e4d4fc-0e37-e0ef-d81d-61f30f2ab975,16f9a2c2-5215-c133-386b-d846a265e006,17042b64-c3cf-04dc-2ec1-df17fcc2c4f0,17371827-e4e5-0341-9607-fc8725970576,179d5513-2ee1-7d50-b5a9-1f462a5a13c0,18491318-4556-1c8e-2c38-4ec3fd207aeb,1a5b721a-0a0d-e709-74da-5907b7b60eeb,1a7090c9-2035-e558-9013-df2027a4701a,1b02deef-fac3-64d9-5790-2ee851ece949,1b1080a9-b695-b921-7481-111579541893,1b4f3833-5ac0-62f0-bf05-dc6b40597fa5,1b8d5022-78e5-c465-67d2-73b25cb0a297,1bd5c1bf-8e6a-b7df-b230-27cfa5611678,1bef982d-9f46-e54c-adad-80135844174a,1cd5a0f0-e554-6980-ac0e-325d9e0359ac,1cfe3719-5e92-6fe4-6927-cb41eb044715,1d5b9dac-cb84-a0ed-af0a-b4d3abb3eaf3,1dddb4ac-7678-84f6-d267-310d847468e9,1df4388f-49d0-2388-07bf-a3bc95452cc7,1e2d3d07-996b-dc9e-25d5-bb68495505d2,1fec413b-8766-c561-0ee7-c8e02d28932b,2250fcb2-49e1-e81b-b839-cf8a30545354,225857ae-2cde-5943-b403-d2e2923b62cd,228c576c-5d51-cb6a-49bf-887e8d0e46fb,23006bc5-f072-8177-087e-80c0782fa76a,23187992-a6c9-62d9-d11c-2e1d6f14106a,23261537-cb4c-314e-62dd-052a403704a0,23280c52-129a-d9ac-000e-0dd6930419d7,24987ca8-a8b4-734f-0a00-745c0430b92e,25b9c235-674c-1829-2739-e906d8b527c9,25dba24c-ae0d-b8ad-95f9-66861bf54605,263a2922-de0c-0a71-661c-11d9715f7edd,268e2f61-b320-225f-3b48-6bfda1c54fa8,26d4a4d0-9ad3-1ea4-207e-6bdaeb46a6b4,27025204-98cf-f9ee-1c17-1bf63469c6a5,274333a8-aad8-8a86-dbd4-d27e3df97893,27f88979-52a9-4a9d-0115-9b4e1fdab552,28b29dcb-51a7-5c77-e6a0-5331ccccdf3b,2943421d-72e2-4516-a06e-6367b1f105e0,2a35e7fe-bbe7-e2d2-479f-b8d3c4ed6c48,2a85166e-b208-ff92-208f-6e166f0e3f32,2b595ced-c518-7871-6579-81792d6c6292,2b5ab709-3e3b-6e4b-4846-9e183b50e15a,2b89c83f-6f57-0bac-8cdc-dd479b54c23f,2b8fedc8-fc00-5064-67c7-b7d8fe5984b2,2bb2964f-4826-389f-aaf2-d019bd2b7b69,2bc33b57-5962-2944-a0d9-10ca5095a6af,2bcc81a3-4bea-b103-9642-2a64b4be9bed,2c4243f4-3dea-6406-da97-f6a66246d8c8,2c4aedc0-3972-c3ec-d541-6a317fc534eb,2ccc5dd3-2d03-ae41-7374-27c27d55ed1c,2cedf1ad-f4e6-3947-8603-396b0d5ab7a2,2d74f058-a971-ac05-aa40-e0f96488745b,2d830969-fe6c-8490-4f3e-105019358dc7,2de4f80d-d6ab-7432-b54e-6c1d9bb96c34,2e0baded-60ab-a0af-a0ba-0ef0980db340,2e398717-7b94-2353-18d8-3c7ecf17dff7,2eb28873-aee1-1f0b-2a4d-0db3f81e673f,2ebf49ba-d590-473a-53ab-02e0b3e7bdc6,2ed63f4a-8061-50e9-64f9-4fd87a8e65c6,2effe1b7-88db-39a3-ef45-865d45f8d014,2fe8bb2c-2634-f8be-9566-153a04f1ead8,302b4633-6932-eaf7-d815-0ff517b56887,308b497a-3e2b-f69c-d26d-0dddc6812e20,31000c00-91c2-1d21-1309-27473016108f,3107fc27-a1d0-482e-8aea-7d83101dedc0,32252b5e-d468-c05d-8a3f-3ba852b6f2de,325386df-2c84-0efa-1167-74557d625535,32ab4af7-f7a6-3e07-99d4-79fc7027a868,32f3c7c2-7fff-3a4f-0783-883d904fd6fb,33610408-9a48-32e0-3324-a6073b269798,33850f61-73a1-6ff8-f2f2-0c2925995b38,33b19af0-bcbf-8ea4-8296-f6da7d5fb670,33b4ac53-4c97-4cd6-8a1b-5ae20019fc93,369131bb-2107-78e8-45af-63ffb5375f2e,36a4a654-c1d2-ef4d-9537-3864d9726dfe,36cfa946-fb78-3621-1b47-3aa55df7e406,379ed4b7-1ab3-8e07-eda9-ca3cedd83505,38479e5c-1f2c-a8a3-1937-cc73d9338918,3893153f-5296-063f-3158-4fdadc886b36,39a39d27-041d-4554-1c42-0c5472c3a04b,39e6ba2b-1b5f-6d7f-1b21-58236d0a8c2b,3a6687d9-edd2-2916-9491-37af03d1579f,3a94030a-9d03-78d6-e23f-0e1b0c668684,3b3eed58-a412-fe3d-3c73-3f4f98ce4321,3be84110-e60a-3f45-ff96-4cc6b7b89aa1,3bf78de9-4374-7b22-001f-90aa9b73a6cf,3c93496c-a31e-19d3-93f0-e1cc06ac8d6b,3c9a3be9-de54-cc0a-0ee0-6f40cbe2e325,3cd6271a-41ca-3e6f-0d76-b8166df684fc,3d222aaf-0429-7abd-ae50-5ac411584f31,3d3ea78c-410f-ae43-6414-4388ef94a095,3d4a8f22-780e-b118-6576-c5dd043f8e21,3da4b072-64f0-24e0-eb4e-2f54f3dc149e,3e08e43a-5363-d1b8-bdb0-d6e165b852a6,3e751046-2270-d31a-b004-cb9527205df3,3e7ac760-28c2-d270-6559-433848578b9b,40afe6f8-f9b6-c045-2f86-bf9c609e2c9a,41804fd5-eb01-5f57-7897-93b048f9abcc,41982734-c45d-a0ef-6bad-8e4a1e62d1b2,42456e60-1338-d4b6-cf0f-4d691ad6d162,427074a4-9501-2d76-fba4-4910f55f3481,42846e36-aaf2-1b3b-b5f1-cb0d81ad5f7b,42b333d6-b932-5dff-08f0-56a4a10ddec6,4354d8e4-a292-98fe-1a18-51b2efa1be7c,448fa654-6184-d9cc-1f33-fc7e4cbacd94,46568955-aba8-dfad-3243-469e1155ce0b,46c8bfa0-3d4f-36d2-2b92-7eaaa73043bd,47adcc09-36cf-c7cb-c16c-85641c08c37d,47c0ac76-5240-f56c-9217-e32ce6412064,47da3e8f-804b-64cf-8347-e416ac42d4d9,47fb2237-0fce-c331-349c-3a47a44db9b8,4830b143-df6d-9de2-1025-db3deebb862b,4830bcf6-77b3-6d97-7779-08c3a40ccdb9,48c3816e-dc68-0a16-7fbb-0c84a840f4f8,48cf6fbb-9d38-514d-4b9f-5610bedf79f9,49f511ae-f387-358b-2841-56e39e319874,4a94f131-b1bb-d416-6f24-2b0660b73545,4ab19806-4eb9-17d7-aa6a-de8ba7aed20a,4b891326-ed58-b750-69fc-a6aabb47ea73,4b9367e8-b6f1-55d0-cad9-2ff86d7a7acc,4bca8555-da3e-9364-6b58-d91bc0488c12,4d644e3b-ee44-6cd4-7151-5c51695b9e3a,4d836a04-07c9-4c6a-a2b3-c9e292dc15d9,4e05fa05-cd6f-ed8d-ce0c-805c774dc3bb,4e6ba1ec-997f-cec4-b85d-e08d4244b6f1,4e9338e8-5a05-12d2-2115-9b3a43beb97e,4eac0077-206b-e936-b0f8-4a876562a8c1,4ecca986-27c5-568f-b718-3eaf98fe2096,4fec2eb2-d888-d8bb-76c5-3d031430b7a9,507cd9ed-96e6-7c8d-e96b-afe244bbe680,5181f28c-bc47-8387-19b5-2a413a54fadb,518578ca-a455-84a1-a486-681338a409a7,51dd0309-fe31-df19-c3f8-295d4d8efd83,5252330b-9cb1-ec79-2f92-9c1dd129d201,52614c0f-c9d9-12ce-785b-4fb0b7ec1d16,5299d781-1927-060e-bd7b-9fb35555c39e,53d66664-b402-9f17-4aa4-b6bf9c67f306,545be64f-788d-a23d-c0ae-cd5a20002118,54ca7434-7f29-9c04-2459-036f4740007c,561dfbf2-1df3-85b9-21e2-5e7a514100f8,56411606-cc55-fa93-c52b-a610fb141b84,567b48c6-fa39-c6e0-b2f7-b4d79ed88cfd,56bf718e-b139-1254-9eb6-42d129ef8ee2,57e7f436-3f56-e116-2981-bb58500e413d,58d60933-a45e-7958-2653-e3a1f6ec7430,59293dc7-3032-b7b0-e8e5-8a92709c503e,593369d2-c395-8617-c52e-c9faf9459fb0,59894e25-0c08-e687-8619-9b42ff121da4,5a5b8047-2790-40b4-65bc-ba551bc31766,5a96e3ba-4a27-adee-8cbb-e7f048ed65e4,5b6a80c4-f334-5812-70ad-52424826d4d9,5bcceb27-079b-73ca-1477-8230b840162c,5be634f3-d36f-6b3c-4cf0-b4dcf97ee91c,5bf23cd4-5954-01ad-f810-d9e22484d802,5c30b20d-e1e0-77d9-01f4-e8534140037e,5c71c35d-6235-c996-f6b7-c982744edfb7,5d305500-8fec-ea1c-208e-a04e206e1749,5d38ee24-81a1-50e0-e29d-3f858c437399,5d6557fd-915f-cd87-a83d-27dcf68ac3b2,5db497cb-7848-5471-30a3-72a6a86b7f12,5de91e76-767e-6b2a-0713-c01327a27514,5e1346e3-54c9-f337-d2df-fb78364b94fe,5ef0b369-84d7-ec0a-4627-cfb55f3acf81,5f3b4517-58b9-ac71-9a52-9656fb0dad20,60177175-ff43-4a53-cda7-c0dcf4df85cf,601e9e9b-a3e8-e20c-c203-f77d6ac1dc63,6133e412-41c4-2b14-c563-0a4698ec87ca,616087a7-80e1-cdf7-b739-1b6c6aa06ee6,61614318-9532-5f30-22ea-6c5afb3e309c,61633537-de5c-3b1e-cace-fcdbfcc33199,61af90fd-c421-f55c-5b3b-0e49839f4f67,622fc4fa-ccd6-adc2-4fb2-9f5925d60608,6234e24f-e97b-b601-abb0-e93c00c95c72,644b9170-99eb-996e-2909-f49c53484caf,64773a0b-d170-9d28-9b49-d52480de8c11,649efc92-68f1-8705-91e5-92ae033bfbfc,64e467e0-c584-e59a-83b1-d993a20554ca,6521e091-9931-30d6-e617-7874e2233afe,65291f52-1ea0-45a7-0889-5cde323beb4f,655129b9-622c-98bf-6ab9-5e7c67336e8d,658e06ef-ec97-bc31-46da-7d3d783ecc77,65da72d2-a211-184f-ef0e-02d57623abfd,6621c9cc-28aa-15a2-0f2f-7e70985584dd,666f2370-5496-753b-6242-c486220efc1e,6799f82c-7b85-0cd2-90da-7d06371aafd6,679e32f3-6361-e944-e20b-4fdd2ad90f19,6808ce9e-8da5-cb33-52e2-33926533068c,686f4330-7f6d-3512-7cea-f38051617fcf,6a5ef429-d213-0906-6763-6010249de3fd,6a7686d2-ad21-a70b-419f-0204d66968e5,6a9be807-9533-0ed6-591f-26cee7b93b7b,6c4754f1-298e-5f8d-d22e-5ebe26856db9,6cd8a9e2-2755-4f85-40a4-7991f0e58375,6cef7895-e3a0-d3c1-9952-0f767c85b4dc,6d0725b4-fd75-e2a0-6f2c-061390662c5b,6dd35f6a-299a-321d-aa9a-5cfdba6e2adf,6de125ea-c469-6bc7-bfe6-32eda1f4f45f,6e62dcc7-50a9-32cb-4e91-1a1cbd37c670,6e7d0785-ace5-a7c0-beb8-393a6622c56d,6ed46aff-5160-550a-c50c-eeddfe199bbb,6ee4cf3b-658e-e4bc-0641-e1bf0c4d535a,6f0cdd68-1b0d-c5fd-075a-9f7542217e07,6f1ea62a-e7a0-a969-ba19-be574cd04708,6f582671-f874-8a2c-845c-f83d650d7ca0,6fc994c1-b9d0-ae07-c36a-cf906aec12ab,7012a37b-7ab2-63f8-f174-eb37fa222d8a,711e2007-4907-d382-8835-c46b054b7b48,7255ad7c-cc52-fa2b-e688-7b776f68a534,7256bc09-ec0e-2a76-a58d-fb50ecc69784,72eb3b94-d725-46dd-3c94-99eee8c69b5d,73262d4c-c112-a23e-2a7c-433aa0055154,73449abe-e5e9-f7ae-4c64-18ee781f03ee,734b2943-b32e-c978-11f3-1217cc7db9fb,73ddecae-fec6-0f32-4385-19fc946435ad,73eea67e-83cc-cd54-a4cc-7f49d10e6220,74763a32-dd73-acf1-7fe1-91951e732f10,753e6636-702a-fbab-ba72-0ad9205fd40b,76c69591-354d-e0ab-ebef-c8a08c20e2c0,77a25c8f-de1e-c658-a36c-b9ad91818a99,7941454e-09b7-7171-a4bf-a8936849ad42,7a2270b7-8391-02e3-1f08-2659b47670a2,7a7528dd-ee60-fabc-0ba9-c0ac67a4d9d1,7ae0cf77-c989-4b0e-b888-16f5b98fa339,7b356513-5bfc-a2d6-e5bf-8c6fd7fb38d6,7bd0bfe1-15a8-bf38-e3c1-4925018fddc7,7bd9e654-a0a7-c21b-ea53-cf36cfeddfb3,7c3686b8-1faa-4071-dfc4-149f4c3978ae,7c44defb-64bf-1135-93bf-f7bc6c0be63f,7c80fe76-d0fc-da69-a35f-42523c4bc6d2,7c864747-16fc-fce4-994f-3f0a3909f7e9,7c8f70ec-0756-0f8b-36ea-4ea608a7e553,7cc26c3a-96d3-d302-a533-13237dd1aed6,7d081823-c830-6e7e-b0cf-b450ece99fd0,7d18dccd-3332-15e8-a7c5-e5d517479b5a,7d9801b9-516f-995f-f3e7-5c1ffd207b6d,7d99c860-ba75-b437-cef8-5184048b1097,7e1479c1-d150-2457-b9f5-f3be218f2def,7e26354e-c3cf-142c-afe2-a6ec4a6e57d9,7e5bf7ca-0b63-58ec-ef80-05e1bc4e49b9,7e60fcf0-8386-9ac4-19df-14b88ab5b5a3,7ee25a8b-2a7c-d1a2-f63c-33df17b6a7bf,7f15c229-0171-5f97-0990-342253f377b8,7f60b600-bd05-112e-c75d-1c3c83c39685,804ffa1e-5c94-1be9-8dbe-3def7cf4f5f4,80806c01-75fe-2094-ed25-cca80361ba3a,80c95997-ea63-eb76-35b9-f357a260f841,80d7d5d6-00ca-01e9-c2d8-a6d86f578cec,81090560-f955-cf7b-d90b-45d4155c86e5,8151aab0-4de7-5cdb-6a1a-91a1f680b279,81fa6f9c-2471-5f73-19e6-1b60a36538d2,822b79ed-b9a5-e70b-99ff-368a3c9e2cd2,8294f081-cf1d-e5b9-fc5c-e138abda1e24,82cf601a-b870-994c-a3a7-c7ae5c361952,83098380-e8a9-4edc-3482-550e311b79c4,8322512b-6107-dff6-0726-748a021b704e,838604eb-2b73-21f0-d116-9fcc3cb4cb67,84795d9f-42d9-cb47-2b38-2569188c2c75,84923ad1-c16e-f39d-2ce6-78b127d6fb32,849715eb-baff-09fe-518a-15841b9ed982,84cd06fd-c2ea-34b2-c442-725d5acd1dfb,85044608-bdc2-2e71-3d93-30352d08692a,852bdb5e-3a0f-5aa7-66bb-389d5e9829a1,854884f1-e63c-1a37-2884-3ac59d2ca956,856112b5-4523-d499-a680-84964b7885cb,860ffa07-0706-1d2d-2991-ce6328b4fd6b,863a69fb-ca9d-ba64-cc10-d970e0e64e1d,86f2c2fc-e04e-6559-62fd-ddb54b6a25b7,87698ce0-0a08-2b5c-482b-987fc0668591,87afcb66-3ea4-2458-27a1-c7f48db309ff,884f3a49-73e9-6112-91f4-8fe973d0ac68,8855747b-a8d5-0a3d-953a-7dd352154291,89db3547-15dc-cbd1-91da-c4b2dae5a548,8a042daf-1086-98f2-a5d5-2ea66b98b95f,8a10ac7e-e71f-836d-2816-4d1e3fe7d293,8aed56cf-5b3c-18b3-0077-c0a750591000,8af5acba-b4f7-d458-9e6e-fea954d8d27e,8b8968d3-c007-de63-7c57-951f7c449633,8b954935-5fdc-9262-4523-101add9b5388,8baa1c4c-35d8-cbc2-dcf0-96c73f191614,8bf38faa-73d8-90cc-aaff-c99a2b883695,8d2f314e-dd8f-b32f-fe75-9874da46e736,8d8e5e9a-a27d-848f-5853-175c78f4bf23,8d93d7b3-9412-4b18-9c6f-52fe60fce0c0,8dbcb5e8-c86a-5aab-112a-fa3f09cba449,8dd43181-9415-b0f3-517b-6201a524163e,8df7b836-d6db-ad0e-6ae6-fc64ce69fc11,8e08fd35-263b-fc36-af9b-54aac8da8253,8e4dcd23-5b4e-eb46-69d2-af122f0c3968,8e8f375d-6cc4-c044-709b-d3b1d36b153d,8eea9a7f-0ad3-ddbd-8735-0b32385d1ffc,8f022931-9ceb-8f95-c41f-2222ab621d23,8f34fa22-1aba-6d97-331e-77df6b342776,904b6724-2548-94de-54b4-a9c64e4797d2,92391e03-2f2e-8f7d-9e82-b572666759e8,928545f9-ff12-3467-5dcf-2f87cb56be7c,92c71384-d1f7-badb-48ae-dd2925562dca,92cf1cbe-533d-2db2-9e8e-59c7da725823,931f199d-2c46-3be7-3498-0c434fe0ef2b,94b9fc34-c3cc-6d4d-5bf2-1ac24940bca5,94fc6548-0c51-247f-7f0d-11343a639bc5,951043fb-bbf2-23b5-88fe-0f992e0fad4b,9633db4c-c4bc-d9d9-c2fb-461e37c76e51,975d05dc-d0c4-fc32-fbf1-ed882001edf4,976dc71e-3a6b-ced8-f07a-9652b97afdf4,977afc22-1ddb-beb5-c5e3-c98ba0f61821,984046f9-f34b-f7a3-7255-8b623ab8ed1e,98787bbf-fead-0f56-350a-ae7bcb4b7514,987e6559-2b1d-087f-eac7-39eb32c60f42,995f54a6-3122-be0c-c6e1-4b7e354ff59d,998f3c1b-bbe5-49a3-b790-a522da4d8863,9a013172-58bf-bd20-2d46-2c3050647e8b,9ab0f050-1845-d782-92ef-d5c1ab97d17b,9ab7229f-c02a-2b71-7039-6b8e9ef1e80a,9aee71d2-3c53-e3ca-fc5b-46af17b1c4dc,9be73e42-2536-3e75-61c3-e79953ac98f7,9c4d5e8f-1e25-be76-b5cb-1b6cf1aa3595,9c7d61ba-b0aa-519c-169a-c3793f8151c2,9d0ad730-b502-a51e-9beb-fba8020dd3aa,9d2e47aa-33fe-b9fb-acf9-92bf34997b68,9d3913b5-7ce7-6aac-8524-19b6560c7e3f,9d618444-1e67-23e7-a531-315d3716fbe7,9d93deb5-6a63-5bba-60b0-5a608f5839f8,9da4508e-1210-4eb8-640c-0c5219401ce5,9de41273-adf6-a498-82e2-8fa999a25080,9e3f6836-185a-5f6e-0f0f-adf1c7b6cb1a,9e498616-494e-30da-4dc2-0664c4401c3b,9e949773-6b5d-be2c-17ef-c1e35eea8e8a,9f094ecc-333a-878c-d8da-fee7520fa927,9fef4744-1ed4-d851-6b11-8fc9d1a52fce,a0982066-ee85-5b94-7947-19565709251b,a09d42f4-5e0a-2702-9bf7-10bc5601c87f,a0a12a21-b300-5104-bee2-0cdb2cc36824,a1646d8c-6972-545e-795c-f8acfb216df3,a1dd3895-ef3c-de00-54f9-c04a6e625485,a39b58a9-e359-d860-8b1b-e62da2a05c60,a4561604-603d-ee80-8252-02df94547be8,a4acc112-a6bf-7be0-589e-4298acc29a58,a5402dfa-05fa-f12a-2c8f-3e90812a9b5c,a598fa24-3742-3e9f-5af2-8f83cb0b027d,a6655c05-0542-517c-58dd-e33b476bf6e1,a7a25599-e21c-f8c4-1c6b-afdf7774819e,a7cc9ffc-c96a-c72c-75a1-6beca0097e7a,a8691440-0fa1-2c97-f83f-2163583c270d,a91031e7-327b-2004-b57b-c7daacd52911,aa34d7de-d107-212b-6f4c-f7bc0315020b,aa7a0c1a-c185-2883-3b3a-07fe85902f8f,aa9301a1-8db6-1b11-b6db-551e2bf8f877,aa9d40c7-bbe9-8e8e-e335-b92a59fc8cea,ab40ccc5-cde7-57c0-1f19-2b58aa4a64a6,ac67550c-6be1-a936-fc08-74c332d40541,ac88fdff-d94d-7de7-acdc-8ed3e152eebb,ad1479ec-bcaf-dd81-1afe-1de0a747b306,ada0de4c-81f9-985b-2ab1-180a9a04aa8a,adc9e9c2-92dd-afde-892b-ce80a7e49068,af5e7ee4-f5a6-47c3-8ac5-86d49110ab62,afd8fcda-1391-4b12-96c7-3321c06ac5c0,b16a6d5e-44a4-3bd3-606c-8a82f0be8fd3,b2050c3a-4530-e170-9159-9edfdf6d821c,b251ca4b-8ad4-2734-b8b2-7bde772e738e,b25d8a06-bec1-647c-feed-94be380b66bf,b2959da8-9e8b-dc48-b7e0-cf0306078bbf,b37214ba-6a9d-2ceb-1876-917fc53a9648,b41a68b1-a264-7344-dd44-365e35f17818,b43daa29-cd02-6e1d-2f18-09e77fad654a,b45c18a4-9f56-a8f8-2ddc-3e4a9303bf56,b57fe0ac-780d-7006-cdf0-592c8b6b88ed,b588426d-2e98-6c7c-f62c-64ab7be1af75,b5bdbfcd-dde6-7b6a-433a-d9e09df3d697,b5cdd415-f162-4c6a-211b-01b6cbf8257a,b60e276d-4fec-98c6-a27f-958f56ed361c,b6542ece-d7aa-9f9b-be05-3ae2d7fd1260,b6664e91-104c-6d7e-0b71-db9ce248fc99,b6d48a81-e6c5-acc4-f599-dfe6bcd56cfc,b71e438b-3026-9bd9-67d1-6d47ddf3d690,b7984574-0f68-4eed-06c1-9235341930b0,b7aababd-4ec9-de51-df1e-2fea9e776b4f,b8023b2f-05c9-901f-ba50-f99de0f09520,b812efb7-bea1-ee1a-f85e-f2419ae37c50,b84d1bf7-94b2-8485-ff92-4f2ef63398a2,b8621469-f450-582a-bd46-d5b0f6ad3c5b,b87d17af-d6b6-8082-08d8-0fb13383664b,b8c1be95-d33f-9081-8d80-d08067570148,b8f42e22-51b7-7e69-6c67-9abef5e85cb7,b9353059-70b2-164c-4e2c-140f51979430,b94b6817-53b6-9988-af01-be3fc5346109,ba4ace9f-4139-7f5b-847b-906838822160,ba748e15-6ce8-76af-7af1-bd9cf25597ee,ba8705d0-1fd2-f760-8dc0-a49737604582,bab056c6-5e26-9815-402c-1b6ca156830b,bac61894-9845-e6a5-4490-3d1e201703e8,bae53689-6eba-8d97-e7d5-9973450fe310,bc2d61d2-4165-6867-c6c0-2645ca0a6895,bc3aa265-c818-5f38-dbef-84dc7a755f69,bc6ddb6f-5985-4998-f17c-587b1e752963,bc91b732-fe2e-4cb2-8cd3-09e809a62032,bcae07e9-d0e1-6caa-2510-aab730eb6d62,bd4766b3-cf25-825a-2c74-8e491f20b76e,bde50ff2-8f8a-5357-00b5-7bafda406fe0,be6d9360-2bea-85ea-3c20-eee67645eb9c,bf548dcb-4bde-cc39-f816-cabf11fbed0b,bf769449-8b81-f2df-fe81-2601ca0cd43b,c0736b07-a1ad-4b17-5aef-06f31cda0e57,c08790dd-8a97-f525-e7ba-994601b0e0ae,c0a40599-08a7-2a6d-dee9-f9bc8c57715c,c19c7391-7ccb-f570-9a39-9e28e8e04150,c1c3d4f5-fe63-93ea-914e-591ad88d4903,c27e2488-ae96-28d5-f813-d0cdd5d13e76,c281154b-d696-eea0-2acc-c13ecb7d82c9,c2e6e322-d424-39b0-e9f3-d4fcc17c4d7e,c3079ff4-c1b3-ca45-dae2-83b1ebfe9136,c34726af-158c-d27c-f995-c48199cf7950,c48b9fdd-6505-b0d5-7f08-61318f5cf264,c4ed739c-902b-ba8b-f4da-418f56499519,c503c108-0546-25b8-7c3d-9cc11dbfa2fc,c5bc9ba6-83ee-0802-9471-a791eedaaa04,c5c0186f-4482-938b-0be0-535d6ba6ab98,c5d1679f-d826-5487-8465-f28b63ba1df9,c610bbe9-8fd6-d9d4-96b3-7b95de5ba133,c6556573-87a5-d8d0-d729-946e4b1ec83a,c6e97a3c-39e2-8bdf-5e24-2824ca0e94c7,c78829ef-418c-17e0-717c-9274209e3a11,c9532709-bfe2-5dcc-4134-d4764ba304a3,c957f060-2e94-f18f-874f-d450b6189735,c9582357-f2cb-34e8-0c2b-39a3265280d5,cab9c4e5-7d7b-53bf-1dd7-071b0cf49198,cb0183b4-0197-5540-83a8-497a94a384a5,cb9e4f09-f653-f9c4-a5da-3277ff864d1d,cba94c5f-7b16-a0ac-00e4-36612531cd9e,cbfa0645-ad77-78c2-b459-f9baf8d0a915,cc787e16-b41f-a9ce-1dd3-809e5eb486c3,cd33a885-df43-900a-8d1c-67a7f9c71536,cd46de3c-0979-0728-698e-3329342b3001,ce1b855a-71ec-ca6e-d562-e4fdffdd3d78,ce44fb39-d9c4-0553-62c7-27f314d7fdd6,ce90e052-9e96-0d62-754e-d32e16693c27,cedc0d47-3389-b9d2-6ea1-17099e3e9d4f,cee9f5b9-d824-5548-280b-7ff40e93184c,cf11fe87-f13c-fa6f-40ae-7e9d36730fa2,cf5774ba-d4f7-73f0-d646-4afad9d59557,d01255c3-9561-fec4-e958-edead085573f,d05fc349-11fb-fe4f-84dc-e1251437065d,d0a26d5e-5536-3c66-8ba4-c44aa118f82c,d0b8ac17-570b-a2ce-e515-2409db1d0371,d13f34e8-58e3-eef7-2899-8c467bcdea58,d17627bd-4019-b68e-4733-a1acc9e3b253,d1a700ec-51ad-a9a8-0120-6130643f4ae5,d1f49fb9-7a73-5ecf-e729-3d5c761ac8d6,d2c343aa-0142-96a7-c5a0-58194b37ec76,d3072d56-ecf5-a15e-afb1-146664f6d2b6,d343b3d8-6a3a-ce7b-69f8-5755399f931f,d4bfc2fd-61ce-6ee7-46e5-24225893b692,d4f1f3aa-740a-a80d-0189-0f316011e514,d6d62eca-cb86-4037-d06a-c0d179c162c5,d71c3386-dad1-3ffc-6dd2-4a7702dbf723,d7a45a18-4203-4d50-e6b0-82cdb0218df1,d7f35517-b0a1-7608-bb0e-4b762bdd415e,d81073fd-467a-7aac-b1a8-ba249907593f,d8893e7a-ef58-b740-cdb6-fc871d278a97,d98133e4-d631-07de-353a-3bd25262e8b5,d984cca2-52d8-5fb1-0e8e-bfffa60411ef,d989583a-f6da-d229-cf9d-7102a8893bb7,d9b784b6-7d33-9467-fa61-83c77a7ea790,da222d32-125e-1c4c-6d7d-a80072d57f48,da440537-68ab-10e3-6e36-7986ce683aa8,db05c850-3d1f-6eb8-13f4-1db17d7aa99c,db3ad39b-7a12-b589-fd9a-e0e39fe82a29,db77a490-90d4-8072-88e3-4415fe9c8922,db93b881-cb7a-610f-6858-7e4dca176df9,dbcef2ea-032d-3df6-2d34-93cf20b6f2d8,dc2194c3-9f75-c507-b21e-8a4470aff057,dc6bdf39-b695-1010-1050-67ce10cbab75,dcdfd554-fdef-bfbb-3b6a-6507020fd163,dd7cc137-745c-fa2c-f0f7-747cdd6e259a,dda1efda-6f6f-69a3-8dd8-bc4e75b1671b,dde28a23-3bd8-99a7-118e-43c6092a40c0,de2df517-bd58-fe7c-17cc-76ed420e30ea,de4433ec-2d95-25ee-40e3-12085adfe62d,df1ae111-2cdb-9d34-30e8-9261642061f3,df4981fd-16f4-8d07-cac0-d8b3d6bc1925,df5a8da4-9dd5-ac02-dfcf-256c42ddfb9c,df6e4f90-b92d-4f09-72ea-7b751dff7bea,e159f17d-5de4-b30f-73e4-fc659f7f3a68,e30cd08e-015a-496c-a3fa-79fdece663d0,e30e9322-c315-2ba0-645b-37ec371fff51,e473c2b1-6977-9578-e3a2-f1e1c2ce86a6,e540ad4d-dac6-fd06-619d-108f3e66c02b,e5705ce2-6a30-c2f0-b2b1-6797db3fbd9e,e6dc8675-7e41-c5a2-21e9-4fd8f939d3ec,e721250d-b553-c9df-4ce4-2198f100902b,e77dcb88-3ce8-f3df-62d5-54fe97c9dc1b,e77f5df0-0b78-a414-87c8-fa7d9de2a1e1,e7b88a25-e0df-62ff-d3bc-420d389678d0,e7e96702-5029-0dab-c79c-82cad0e299af,e8917f9d-c00b-ea6f-3e29-06ab3a8a22f0,e8be10d3-1622-ce5d-1009-7ecaf716494e,e9050c43-af96-b835-5ea2-692edcd360ac,e92c43c7-29db-7318-b6ac-d5f417a25725,e958f8f4-11f4-3aa9-6ac7-090c80053398,e9b61905-9694-69bd-828f-37177a037990,e9bbedbf-57ab-1c02-0eaa-99bba2194cfd,ea092e69-253f-98c6-55c9-e99755af023f,eaae0b78-7e23-8b2f-644d-0db20d114873,eadaef5f-0599-2cb2-7f1c-8981a96732d7,eadfa68b-7d93-ab6d-e0d2-bd88609feaf7,ecc46f41-2eb6-33b1-dba1-6ba4d1b0020b,ed0e80d6-cf11-15ff-d4eb-06580d1ee9b5,ed14028c-b88a-2235-0f80-a42860750a00,ed251596-32db-26b7-90f1-7a4f0e9d76bd,ed2f1f40-9cd6-7b9f-4b2a-e0f40ede87f6,ed8e8b40-3456-116a-94e6-c695bece7b4f,ed8f3b1d-f4f4-9bd9-ddef-fbbe7261212e,ee5e3286-ddda-432c-abf8-f38777bc83e6,ef0b61d0-ba62-8fa2-f5d6-47ba00776a73,efeb0711-8a5a-fe5c-b728-cc990bc7a37e,f034c60a-ca9c-c83b-1a8d-db2f46cb18aa,f0485a7b-dadb-7f38-7ecc-e7501b087b64,f0fa10b1-f8ac-44d9-d9c2-7525732dda8a,f1c57d1e-3df9-d1d9-807d-72d87040e6b6,f367ee56-625e-33a2-19e6-f89cec563c8d,f3bb72ed-5959-4c9f-aac0-ac5d27d31b47,f441be38-2c4d-7db5-7d66-83df40ddca74,f50e1db0-bc3e-672b-973d-b911a5da0484,f54cf7b6-f03e-3c86-db4b-4c10a9cb52cb,f7623ed9-3793-6380-a178-a772f0a98141,f796b4ad-f170-7593-079a-24f6c4c69f19,f7972b59-af92-7f12-199e-8d59c1178d04,f86a51ec-c00f-a673-f098-b4287b4762de,f8701319-41d4-2c73-af7d-614d0e1e78b2,f969564d-29c3-048d-0801-1a610f99c474,fa313f83-f52e-e264-0de4-579fb0325689,fb6368f9-794a-0c68-c6bc-04a4ce5831ec,fb679056-7510-434b-4fa4-89a952ea89e0,fbf9b14f-5d47-aaf1-9b94-db2e00d288be,fbfc5f57-8c5e-21e2-9c66-f73a9ac5bb27,fcfbf31d-66b2-6b1f-dd75-982aa9d0a701,fd706b70-acd2-aba3-3e0f-7ce4776b6343,fe95bc01-8e3e-6180-9f4a-be14a1c3d8fb,ff6dc18e-9e6b-fdbb-fd3a-3fa1f2d465f0,ffbe7f80-5bc2-fefe-28b2-a69994f938f0}'::uuid[])))
+              Rows Removed by Filter: 64279
+              Buffers: shared hit=4227
+Planning Time: 0.817 ms
+Execution Time: 31.322 ms
+
+### R5 orders.list search="kavitha a/l pillai" rewritten: rows  | median 5.244 ms
+Limit  (cost=0.49..1379.78 rows=20 width=169) (actual time=0.653..5.160 rows=20 loops=1)
+  Buffers: shared hit=6607
+  ->  Index Scan Backward using orders_created_at_idx on orders o  (cost=0.49..21724.35 rows=315 width=169) (actual time=0.652..5.158 rows=20 loops=1)
+        Filter: ((order_number ~~* '%kavitha a/l pillai%'::text) OR (customer_id = ANY ('{00fd7a70-ddf7-bfe0-41e0-0a60e996c452,151144fa-e321-3e1b-d2f8-fb90170b0a89,20068be2-5623-4cd0-496d-814beadc62b3,230f79ce-c0c4-f942-b9ff-53060645af8e,4080d4d6-0f85-9832-4db2-24e4c5e891f5,528418e6-10a5-ff6e-acbf-d42759373681,52ad42e3-503c-0e52-142b-c024ea73d3a0,596d6261-9c41-3fcd-b3d8-b709384fbbac,597f7c44-9d55-ee66-dad3-580f9163f56d,630d41ef-2eac-d486-6118-2955be2ef495,6bfa25f7-3347-e9c9-26be-db3ce123e7d2,775cec87-f406-7ece-21f2-f204f64caff6,80eb4d9c-5bf7-d083-aaa7-f6e855cccbbd,8be53c65-5f19-345f-1416-6e2cf04ec5e8,97081dfa-86ef-49ed-2cd0-8b89146a158d,a1efe3e3-ea62-b7fa-424d-302a29c7106d,a5472f27-a507-c2d9-ff6e-fa5bfb70e4e6,a7d340e2-3cca-3901-9d6e-eb84e98ccb7a,a9c4b6f6-9521-c73e-6602-c10070abc832,b0ddf788-803b-b8ec-570d-cc20751732e2,c8368441-56de-f23c-2702-c4445bb241c2,ccc6ab4c-9583-c7c6-f89a-503350f55b1d,db509cc3-64cb-0801-bd37-cc32c9627859,e072af42-b47f-4ab2-af6b-520e8addb6c3,e6a58746-e663-a6f9-0e05-9f2a6ab3cbe1,eae2cd1f-e346-85e5-4488-a3f1b4d440b9,fc9f048c-c3a9-d2fd-5478-536678b2d342}'::uuid[])))
+        Rows Removed by Filter: 10662
+        Buffers: shared hit=6607
+Planning Time: 0.119 ms
+Execution Time: 5.176 ms
+
+### R5c orders.list search="kavitha a/l pillai" rewritten: count  | median 32.177 ms
+Aggregate  (cost=6720.84..6720.85 rows=1 width=8) (actual time=32.330..34.130 rows=1 loops=1)
+  Buffers: shared hit=4227
+  ->  Gather  (cost=1000.07..6716.90 rows=315 width=16) (actual time=0.379..34.103 rows=322 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=4227
+        ->  Parallel Seq Scan on orders  (cost=0.07..5685.40 rows=131 width=16) (actual time=0.252..30.045 rows=107 loops=3)
+              Filter: ((order_number ~~* '%kavitha a/l pillai%'::text) OR (customer_id = ANY ('{00fd7a70-ddf7-bfe0-41e0-0a60e996c452,151144fa-e321-3e1b-d2f8-fb90170b0a89,20068be2-5623-4cd0-496d-814beadc62b3,230f79ce-c0c4-f942-b9ff-53060645af8e,4080d4d6-0f85-9832-4db2-24e4c5e891f5,528418e6-10a5-ff6e-acbf-d42759373681,52ad42e3-503c-0e52-142b-c024ea73d3a0,596d6261-9c41-3fcd-b3d8-b709384fbbac,597f7c44-9d55-ee66-dad3-580f9163f56d,630d41ef-2eac-d486-6118-2955be2ef495,6bfa25f7-3347-e9c9-26be-db3ce123e7d2,775cec87-f406-7ece-21f2-f204f64caff6,80eb4d9c-5bf7-d083-aaa7-f6e855cccbbd,8be53c65-5f19-345f-1416-6e2cf04ec5e8,97081dfa-86ef-49ed-2cd0-8b89146a158d,a1efe3e3-ea62-b7fa-424d-302a29c7106d,a5472f27-a507-c2d9-ff6e-fa5bfb70e4e6,a7d340e2-3cca-3901-9d6e-eb84e98ccb7a,a9c4b6f6-9521-c73e-6602-c10070abc832,b0ddf788-803b-b8ec-570d-cc20751732e2,c8368441-56de-f23c-2702-c4445bb241c2,ccc6ab4c-9583-c7c6-f89a-503350f55b1d,db509cc3-64cb-0801-bd37-cc32c9627859,e072af42-b47f-4ab2-af6b-520e8addb6c3,e6a58746-e663-a6f9-0e05-9f2a6ab3cbe1,eae2cd1f-e346-85e5-4488-a3f1b4d440b9,fc9f048c-c3a9-d2fd-5478-536678b2d342}'::uuid[])))
+              Rows Removed by Filter: 66559
+              Buffers: shared hit=4227
+Planning Time: 0.128 ms
+Execution Time: 34.160 ms
+
+### R6 orders.list search="150123" rewritten: rows  | median 29.317 ms
+Limit  (cost=6268.81..6270.68 rows=16 width=169) (actual time=25.192..27.222 rows=1 loops=1)
+  Buffers: shared hit=4301
+  ->  Gather Merge  (cost=6268.81..6270.68 rows=16 width=169) (actual time=25.191..27.219 rows=1 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=4301
+        ->  Sort  (cost=5268.79..5268.81 rows=8 width=169) (actual time=23.026..23.027 rows=0 loops=3)
+              Sort Key: created_at DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=4301
+              Worker 0:  Sort Method: quicksort  Memory: 25kB
+              Worker 1:  Sort Method: quicksort  Memory: 25kB
+              ->  Parallel Seq Scan on orders o  (cost=0.00..5268.67 rows=8 width=169) (actual time=17.863..22.902 rows=0 loops=3)
+                    Filter: (order_number ~~* '%150123%'::text)
+                    Rows Removed by Filter: 66666
+                    Buffers: shared hit=4227
+Planning Time: 0.097 ms
+Execution Time: 27.259 ms
+
+### R6c orders.list search="150123" rewritten: count  | median 26.961 ms
+Aggregate  (cost=6270.92..6270.93 rows=1 width=8) (actual time=24.645..26.634 rows=1 loops=1)
+  Buffers: shared hit=4227
+  ->  Gather  (cost=1000.00..6270.67 rows=20 width=16) (actual time=10.059..26.628 rows=1 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=4227
+        ->  Parallel Seq Scan on orders  (cost=0.00..5268.67 rows=8 width=16) (actual time=17.528..22.352 rows=0 loops=3)
+              Filter: (order_number ~~* '%150123%'::text)
+              Rows Removed by Filter: 66666
+              Buffers: shared hit=4227
+Planning Time: 0.097 ms
+Execution Time: 26.649 ms
+
+### O7 orders.list search="bin" (broad, keeps the join): rows  | median 0.097 ms
+Limit  (cost=0.71..16.57 rows=20 width=169) (actual time=0.022..0.080 rows=20 loops=1)
+  Buffers: shared hit=141
+  ->  Nested Loop Left Join  (cost=0.71..86083.86 rows=108535 width=169) (actual time=0.022..0.079 rows=20 loops=1)
+        Filter: ((o.order_number ~~* '%bin%'::text) OR ((j0.name ~~* '%bin%'::text) AND (j0.id IS NOT NULL)))
+        Rows Removed by Filter: 19
+        Buffers: shared hit=141
+        ->  Index Scan Backward using orders_created_at_idx on orders o  (cost=0.42..20224.28 rows=200000 width=169) (actual time=0.007..0.013 rows=39 loops=1)
+              Buffers: shared hit=24
+        ->  Index Scan using customers_pkey on customers j0  (cost=0.29..0.31 rows=1 width=33) (actual time=0.001..0.001 rows=1 loops=39)
+              Index Cond: (id = o.customer_id)
+              Buffers: shared hit=117
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.221 ms
+Execution Time: 0.099 ms
+
+### O7c orders.list search="bin" (broad, keeps the join): count  | median 152.047 ms
+Aggregate  (cost=8922.85..8922.86 rows=1 width=8) (actual time=154.860..154.862 rows=1 loops=1)
+  Buffers: shared hit=4591
+  ->  Hash Left Join  (cost=814.00..7566.16 rows=108535 width=16) (actual time=3.730..151.471 rows=107984 loops=1)
+        Hash Cond: (orders.customer_id = j0.id)
+        Filter: ((orders.order_number ~~* '%bin%'::text) OR ((j0.name ~~* '%bin%'::text) AND (j0.id IS NOT NULL)))
+        Rows Removed by Filter: 92016
+        Buffers: shared hit=4591
+        ->  Seq Scan on orders  (cost=0.00..6227.00 rows=200000 width=36) (actual time=0.003..9.080 rows=200000 loops=1)
+              Buffers: shared hit=4227
+        ->  Hash  (cost=564.00..564.00 rows=20000 width=33) (actual time=3.633..3.634 rows=20000 loops=1)
+              Buckets: 32768  Batches: 1  Memory Usage: 1529kB
+              Buffers: shared hit=364
+              ->  Seq Scan on customers j0  (cost=0.00..564.00 rows=20000 width=33) (actual time=0.002..1.196 rows=20000 loops=1)
+                    Buffers: shared hit=364
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.272 ms
+Execution Time: 155.159 ms
+
+### R2 dashboard unpaid rewritten (IN instead of <>)  | median 7.952 ms
+Aggregate  (cost=5925.85..5925.86 rows=1 width=72) (actual time=8.973..8.974 rows=1 loops=1)
+  Buffers: shared hit=4186
+  ->  Bitmap Heap Scan on orders  (cost=322.52..5441.51 rows=27676 width=28) (actual time=1.239..7.791 rows=15886 loops=1)
+        Recheck Cond: (payment_status = ANY (ARRAY[('UNPAID'::cstring)::"PaymentStatus", ('PARTIAL'::cstring)::"PaymentStatus"]))
+        Filter: (status <> ('CANCELLED'::cstring)::"OrderStatus")
+        Rows Removed by Filter: 13899
+        Heap Blocks: exact=4160
+        Buffers: shared hit=4186
+        ->  Bitmap Index Scan on orders_payment_status_idx  (cost=0.00..315.60 rows=29733 width=0) (actual time=0.868..0.868 rows=29785 loops=1)
+              Index Cond: (payment_status = ANY (ARRAY[('UNPAID'::cstring)::"PaymentStatus", ('PARTIAL'::cstring)::"PaymentStatus"]))
+              Buffers: shared hit=26
+Planning Time: 0.076 ms
+Execution Time: 9.047 ms
