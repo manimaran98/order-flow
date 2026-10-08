@@ -33,6 +33,8 @@ Roughly **USD 50–60/month** in `ap-southeast-1`: ALB ~$20, two 0.25 vCPU Farga
 
 ## First-time setup
 
+Every GitHub repository variable, with its value and where to find it, is listed in [`github-variables.example.env`](github-variables.example.env).
+
 Terraform runs in GitHub Actions (`.github/workflows/terraform.yml`) using an IAM role you create once by hand:
 
 - **OIDC provider:** `token.actions.githubusercontent.com` with audience `sts.amazonaws.com`.
