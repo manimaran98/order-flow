@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { money } from '../common/money.js';
 import { startOfBusinessDay } from '../common/time.js';
-import type { Prisma } from '../generated/prisma/client.js';
+import { PaymentStatus, type Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 const live = { status: { not: 'CANCELLED' } } satisfies Prisma.OrderWhereInput;
+
+// Every payment status except PAID, as `IN (...)` rather than `<> 'PAID'`: same rows, but `<>` cannot
+// use an index (it read all orders) while `IN` uses orders_payment_status_idx. docs/perf/query-optimisation.md
+const NOT_PAID = Object.values(PaymentStatus).filter((s) => s !== PaymentStatus.PAID);
 
 @Injectable()
 export class DashboardService {
@@ -18,7 +22,7 @@ export class DashboardService {
         _sum: { total: true },
       }),
       this.prisma.order.aggregate({
-        where: { ...live, paymentStatus: { not: 'PAID' } },
+        where: { ...live, paymentStatus: { in: NOT_PAID } },
         _count: true,
         _sum: { total: true, paidAmount: true },
       }),
