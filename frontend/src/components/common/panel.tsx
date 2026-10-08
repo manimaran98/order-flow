@@ -16,7 +16,7 @@ type PanelProps = {
   as?: 'section' | 'aside';
 };
 
-/** A raised white panel with an optional header row; the one panel used across the app. */
+/** A flat white panel (border, no shadow) with an optional header row; the one panel used across the app. */
 export function Panel({ title, id, action, aside, children, className, as: Tag = 'section' }: PanelProps) {
   const generated = useId();
   const headingId = id ?? generated;

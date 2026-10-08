@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-08T00:00:00Z",
+  "title": "Design System: OrderFlow",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Ledger Indigo", "canonical": "oklch(0.5 0.2 277)", "tonalRamp": ["oklch(0.15 0.06 277)", "oklch(0.25 0.12 277)", "oklch(0.35 0.16 277)", "oklch(0.44 0.176 277)", "oklch(0.5 0.2 277)", "oklch(0.65 0.15 277)", "oklch(0.8 0.08 277)", "oklch(0.95 0.025 277)"] },
+      "primary-hover": { "role": "primary", "displayName": "Ledger Indigo, pressed", "canonical": "color-mix(in oklch, oklch(0.5 0.2 277), black 12%)" },
+      "primary-foreground": { "role": "neutral", "displayName": "On Indigo", "canonical": "oklch(0.99 0 0)" },
+      "canvas": { "role": "neutral", "displayName": "Canvas White", "canonical": "oklch(1 0 0)" },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "oklch(0.21 0.006 286)", "tonalRamp": ["oklch(0.15 0.006 286)", "oklch(0.21 0.006 286)", "oklch(0.37 0.013 286)", "oklch(0.48 0.014 286)", "oklch(0.6 0.012 286)", "oklch(0.82 0.006 286)", "oklch(0.915 0.004 286)", "oklch(0.982 0.002 286)"] },
+      "well": { "role": "neutral", "displayName": "Well", "canonical": "oklch(0.982 0.002 286)" },
+      "muted-ink": { "role": "neutral", "displayName": "Muted Ink", "canonical": "oklch(0.48 0.014 286)" },
+      "quiet-fill": { "role": "neutral", "displayName": "Quiet Fill", "canonical": "oklch(0.967 0.003 286)" },
+      "hover-fill": { "role": "neutral", "displayName": "Hover Fill", "canonical": "oklch(0.955 0.004 286)" },
+      "sidebar-hover": { "role": "neutral", "displayName": "Sidebar Hover", "canonical": "oklch(0.94 0.004 286)" },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "oklch(0.915 0.004 286)" },
+      "control-stroke": { "role": "neutral", "displayName": "Control Stroke", "canonical": "oklch(0.87 0.006 286)" },
+      "destructive": { "role": "semantic", "displayName": "Destructive Red", "canonical": "oklch(0.55 0.21 27)" },
+      "amber-ink": { "role": "semantic", "displayName": "Amber (Pending, Partial, Low stock)", "canonical": "oklch(47.3% 0.137 46.201)", "tonalRamp": ["oklch(47.3% 0.137 46.201)", "oklch(55.5% 0.163 48.998)", "oklch(66.6% 0.179 58.318)", "oklch(76.9% 0.188 70.08)", "oklch(82.8% 0.189 84.429)", "oklch(96.2% 0.059 95.617)", "oklch(98.7% 0.022 95.277)"] },
+      "sky-ink": { "role": "semantic", "displayName": "Sky (Confirmed)", "canonical": "oklch(44.3% 0.11 240.79)", "tonalRamp": ["oklch(44.3% 0.11 240.79)", "oklch(50% 0.134 242.749)", "oklch(58.8% 0.158 241.966)", "oklch(68.5% 0.169 237.323)", "oklch(74.6% 0.16 232.661)", "oklch(95.1% 0.026 236.824)", "oklch(97.7% 0.013 236.62)"] },
+      "violet-ink": { "role": "semantic", "displayName": "Violet (Packing)", "canonical": "oklch(43.2% 0.232 292.759)", "tonalRamp": ["oklch(43.2% 0.232 292.759)", "oklch(49.1% 0.27 292.581)", "oklch(54.1% 0.281 293.009)", "oklch(60.6% 0.25 292.717)", "oklch(70.2% 0.183 293.541)", "oklch(94.3% 0.029 294.588)", "oklch(96.9% 0.016 293.756)"] },
+      "cyan-ink": { "role": "semantic", "displayName": "Cyan (Ready)", "canonical": "oklch(45% 0.085 224.283)", "tonalRamp": ["oklch(45% 0.085 224.283)", "oklch(52% 0.105 223.128)", "oklch(60.9% 0.126 221.723)", "oklch(71.5% 0.143 215.221)", "oklch(78.9% 0.154 211.53)", "oklch(95.6% 0.045 203.388)", "oklch(98.4% 0.019 200.873)"] },
+      "emerald-ink": { "role": "semantic", "displayName": "Emerald (Delivered, Paid, Active)", "canonical": "oklch(43.2% 0.095 166.913)", "tonalRamp": ["oklch(43.2% 0.095 166.913)", "oklch(50.8% 0.118 165.612)", "oklch(59.6% 0.145 163.225)", "oklch(69.6% 0.17 162.48)", "oklch(76.5% 0.177 163.223)", "oklch(95% 0.052 163.051)", "oklch(97.9% 0.021 166.113)"] },
+      "rose-ink": { "role": "semantic", "displayName": "Rose (Unpaid, Out of stock)", "canonical": "oklch(45.5% 0.188 13.697)", "tonalRamp": ["oklch(45.5% 0.188 13.697)", "oklch(51.4% 0.222 16.935)", "oklch(58.6% 0.253 17.585)", "oklch(64.5% 0.246 16.439)", "oklch(71.2% 0.194 13.428)", "oklch(94.1% 0.03 12.58)", "oklch(96.9% 0.015 12.422)"] },
+      "zinc-ink": { "role": "semantic", "displayName": "Zinc (Cancelled, Inactive)", "canonical": "oklch(44.2% 0.017 285.786)", "tonalRamp": ["oklch(27.4% 0.006 286.033)", "oklch(37% 0.013 285.805)", "oklch(44.2% 0.017 285.786)", "oklch(55.2% 0.016 285.938)", "oklch(70.5% 0.015 286.067)", "oklch(96.7% 0.001 286.375)", "oklch(98.5% 0 0)"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Page titles; 1.25rem on phone, 1.5rem from md. Order numbers in a title switch to Geist Mono at -0.03em." },
+      "figure": { "displayName": "Figure", "purpose": "Large tabular counts and RM amounts at the right of attention rows and in the Today summary." },
+      "title": { "displayName": "Title", "purpose": "Panel headings, disclosure summaries, empty-state titles, wordmark." },
+      "body": { "displayName": "Body", "purpose": "Table cells, row primaries, facts, descriptions. Inputs use 1rem on phones." },
+      "label": { "displayName": "Label", "purpose": "Form labels, back links, row secondaries, panel asides, hints." },
+      "caption": { "displayName": "Caption", "purpose": "Table column headers, pills, filter labels." },
+      "identifier": { "displayName": "Identifier", "purpose": "Geist Mono for order numbers and SKUs only." }
+    },
+    "shadows": [
+      { "name": "whisper", "value": "0 1px 2px 0 oklch(0.21 0.006 286 / 0.05)", "purpose": "Controls only (buttons, inputs, selects) and the current sidebar nav item." },
+      { "name": "raised", "value": "0 1px 3px 0 oklch(0.21 0.006 286 / 0.07), 0 1px 2px -1px oklch(0.21 0.006 286 / 0.06)", "purpose": "The lone auth panel and error-page panel on a well ground." },
+      { "name": "overlay", "value": "0 12px 24px -6px oklch(0.21 0.006 286 / 0.12), 0 4px 8px -4px oklch(0.21 0.006 286 / 0.08)", "purpose": "Sheets, over a 10% black scrim with a light backdrop blur." },
+      { "name": "focus-ring", "value": "0 0 0 3px oklch(0.5 0.2 277 / 0.35)", "purpose": "Focus on buttons and row links; inputs use the same ring at 20% with an indigo border." }
+    ],
+    "motion": [
+      { "name": "state", "value": "150ms ease-out", "purpose": "Colour, background, border and shadow transitions on interactive state; chevron 2px nudge on row hover." },
+      { "name": "disclosure", "value": "200ms ease-out", "purpose": "Disclosure chevron rotation; sheet slide." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "All transitions and animations collapse under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action in a view region: New order, Save payment, the next status step.",
+      "html": "<button class=\"ds-btn-primary\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M5 12h14M12 5v14\"/></svg>New order</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid transparent; border-radius: 6.4px; background: var(--primary, oklch(0.5 0.2 277)); color: var(--primary-foreground, oklch(0.99 0 0)); font: 500 0.875rem/1 Geist, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px 0 oklch(0.21 0.006 286 / 0.05); cursor: pointer; transition: background-color 150ms ease-out, box-shadow 150ms ease-out; } .ds-btn-primary:hover { background: color-mix(in oklch, oklch(0.5 0.2 277), black 12%); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px oklch(0.5 0.2 277 / 0.35); } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The default secondary action: Previous, Next, Log out, Keep it.",
+      "html": "<button class=\"ds-btn-outline\">Previous</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid oklch(0.87 0.006 286); border-radius: 6.4px; background: oklch(1 0 0); color: oklch(0.21 0.006 286); font: 500 0.875rem/1 Geist, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px 0 oklch(0.21 0.006 286 / 0.05); cursor: pointer; transition: background-color 150ms ease-out, box-shadow 150ms ease-out; } .ds-btn-outline:hover { background: oklch(0.955 0.004 286); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px oklch(0.5 0.2 277 / 0.35); } .ds-btn-outline:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Cancel order, delete: outlined in red, never filled.",
+      "html": "<button class=\"ds-btn-destructive\">Cancel order</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border: 1px solid oklch(0.55 0.21 27 / 0.25); border-radius: 6.4px; background: oklch(1 0 0); color: oklch(0.55 0.21 27); font: 500 0.875rem/1 Geist, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px 0 oklch(0.21 0.006 286 / 0.05); cursor: pointer; transition: background-color 150ms ease-out; } .ds-btn-destructive:hover { background: oklch(0.55 0.21 27 / 0.08); } .ds-btn-destructive:focus-visible { outline: none; border-color: oklch(0.55 0.21 27 / 0.4); box-shadow: 0 0 0 3px oklch(0.55 0.21 27 / 0.2); }"
+    },
+    {
+      "name": "Labelled Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Label above a white control with a stronger stroke than panel hairlines; indigo focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Amount (RM)</span><input class=\"ds-input\" value=\"166.80\"></label>",
+      "css": ".ds-field { display: grid; gap: 6px; } .ds-field-label { font: 500 0.8125rem/1 Geist, ui-sans-serif, system-ui, sans-serif; color: oklch(0.21 0.006 286); } .ds-input { height: 36px; padding: 4px 12px; border: 1px solid oklch(0.87 0.006 286); border-radius: 6.4px; background: oklch(1 0 0); color: oklch(0.21 0.006 286); font: 400 0.875rem/1.43 Geist, ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; box-shadow: 0 1px 2px 0 oklch(0.21 0.006 286 / 0.05); outline: none; caret-color: oklch(0.5 0.2 277); transition: border-color 150ms, box-shadow 150ms; } .ds-input:focus-visible { border-color: oklch(0.5 0.2 277); box-shadow: 0 0 0 3px oklch(0.5 0.2 277 / 0.2); }"
+    },
+    {
+      "name": "Status Pills",
+      "kind": "chip",
+      "refersTo": "pill-pending",
+      "description": "Order status (dot plus label) and payment status (empty, half, full glyph); one anatomy for every state.",
+      "html": "<span class=\"ds-pill ds-pill-amber\"><span class=\"ds-dot\"></span>Pending</span> <span class=\"ds-pill ds-pill-sky\"><span class=\"ds-dot\"></span>Confirmed</span> <span class=\"ds-pill ds-pill-violet\"><span class=\"ds-dot\"></span>Packing</span> <span class=\"ds-pill ds-pill-cyan\"><span class=\"ds-dot\"></span>Ready</span> <span class=\"ds-pill ds-pill-emerald\"><span class=\"ds-dot\"></span>Delivered</span> <span class=\"ds-pill ds-pill-zinc\"><span class=\"ds-dot\"></span>Cancelled</span> <span class=\"ds-pill ds-pill-rose\"><svg viewBox=\"0 0 12 12\" width=\"12\" height=\"12\"><circle cx=\"6\" cy=\"6\" r=\"4.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg>Unpaid</span> <span class=\"ds-pill ds-pill-amber\"><svg viewBox=\"0 0 12 12\" width=\"12\" height=\"12\"><circle cx=\"6\" cy=\"6\" r=\"4.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M6 1.75a4.25 4.25 0 0 1 0 8.5z\" fill=\"currentColor\"/></svg>Partial</span> <span class=\"ds-pill ds-pill-emerald\"><svg viewBox=\"0 0 12 12\" width=\"12\" height=\"12\"><circle cx=\"6\" cy=\"6\" r=\"5\" fill=\"currentColor\"/><path d=\"M3.75 6.1 5.3 7.6 8.3 4.5\" fill=\"none\" stroke=\"white\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>Paid</span>",
+      "css": ".ds-pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 9999px; font: 500 0.75rem/1 Geist, ui-sans-serif, system-ui, sans-serif; white-space: nowrap; box-shadow: inset 0 0 0 1px var(--ring-c); background: var(--tint); color: var(--ink); } .ds-dot { width: 6px; height: 6px; border-radius: 9999px; background: var(--dot); } .ds-pill-amber { --tint: oklch(98.7% 0.022 95.277); --ink: oklch(47.3% 0.137 46.201); --dot: oklch(76.9% 0.188 70.08); --ring-c: oklch(66.6% 0.179 58.318 / 0.2); } .ds-pill-sky { --tint: oklch(97.7% 0.013 236.62); --ink: oklch(44.3% 0.11 240.79); --dot: oklch(68.5% 0.169 237.323); --ring-c: oklch(58.8% 0.158 241.966 / 0.2); } .ds-pill-violet { --tint: oklch(96.9% 0.016 293.756); --ink: oklch(43.2% 0.232 292.759); --dot: oklch(60.6% 0.25 292.717); --ring-c: oklch(54.1% 0.281 293.009 / 0.2); } .ds-pill-cyan { --tint: oklch(98.4% 0.019 200.873); --ink: oklch(45% 0.085 224.283); --dot: oklch(60.9% 0.126 221.723); --ring-c: oklch(60.9% 0.126 221.723 / 0.25); } .ds-pill-emerald { --tint: oklch(97.9% 0.021 166.113); --ink: oklch(43.2% 0.095 166.913); --dot: oklch(69.6% 0.17 162.48); --ring-c: oklch(59.6% 0.145 163.225 / 0.2); } .ds-pill-rose { --tint: oklch(96.9% 0.015 12.422); --ink: oklch(45.5% 0.188 13.697); --dot: oklch(64.5% 0.246 16.439); --ring-c: oklch(58.6% 0.253 17.585 / 0.2); } .ds-pill-zinc { --tint: oklch(96.7% 0.001 286.375); --ink: oklch(44.2% 0.017 285.786); --dot: oklch(70.5% 0.015 286.067); --ring-c: oklch(55.2% 0.016 285.938 / 0.2); }"
+    },
+    {
+      "name": "Attention Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat bordered panel with a title row and whole-row links; figure large and tabular at the right, chevron nudges on hover.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">Needs attention</h2><a class=\"ds-row\" href=\"#\"><span class=\"ds-tile\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/></svg></span><span class=\"ds-row-text\"><span class=\"ds-row-label\">Unpaid orders</span><span class=\"ds-row-hint\">RM 885.40 still to collect</span></span><span class=\"ds-figure\">5</span><svg class=\"ds-chev\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"m9 18 6-6-6-6\"/></svg></a><a class=\"ds-row\" href=\"#\"><span class=\"ds-tile ds-tile-clear\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg></span><span class=\"ds-row-text\"><span class=\"ds-row-label\">Pending orders</span><span class=\"ds-row-hint\">Nothing to do</span></span><span class=\"ds-figure ds-figure-clear\">0</span><svg class=\"ds-chev\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"m9 18 6-6-6-6\"/></svg></a></section>",
+      "css": ".ds-panel { overflow: hidden; border: 1px solid oklch(0.915 0.004 286); border-radius: 8px; background: oklch(1 0 0); color: oklch(0.21 0.006 286); font-family: Geist, ui-sans-serif, system-ui, sans-serif; } .ds-panel-title { margin: 0; padding: 12px 20px; border-bottom: 1px solid oklch(0.915 0.004 286); font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; } .ds-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; color: inherit; text-decoration: none; transition: background-color 150ms ease-out; } .ds-row + .ds-row { border-top: 1px solid oklch(0.915 0.004 286); } .ds-row:hover { background: oklch(0.982 0.002 286); } .ds-row:focus-visible { outline: none; background: oklch(0.982 0.002 286); box-shadow: inset 0 0 0 3px oklch(0.5 0.2 277 / 0.35); } .ds-tile { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 6.4px; background: oklch(96.9% 0.015 12.422); color: oklch(51.4% 0.222 16.935); box-shadow: inset 0 0 0 1px oklch(58.6% 0.253 17.585 / 0.15); } .ds-tile-clear { background: oklch(0.967 0.003 286); color: oklch(0.48 0.014 286); box-shadow: inset 0 0 0 1px oklch(0.915 0.004 286); } .ds-row-text { display: grid; gap: 2px; flex: 1; min-width: 0; } .ds-row-label { font-size: 0.875rem; font-weight: 500; } .ds-row-hint { font-size: 0.8125rem; color: oklch(0.48 0.014 286); } .ds-figure { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; } .ds-figure-clear { color: oklch(0.48 0.014 286 / 0.7); } .ds-chev { flex-shrink: 0; color: oklch(0.48 0.014 286 / 0.6); transition: transform 150ms ease-out, color 150ms ease-out; } .ds-row:hover .ds-chev { transform: translateX(2px); color: oklch(0.21 0.006 286); }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item-current",
+      "description": "Desktop sidebar on the well; the current item is a white chip with a hairline ring, whisper shadow and indigo icon.",
+      "html": "<nav class=\"ds-sidebar\"><a class=\"ds-nav-item ds-nav-current\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\" rx=\"1\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\" rx=\"1\"/></svg>Dashboard</a><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"8\" y=\"2\" width=\"8\" height=\"4\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01\"/></svg>Orders</a><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M5 12h14M12 5v14\"/></svg>New order</a></nav>",
+      "css": ".ds-sidebar { display: grid; gap: 2px; width: 216px; padding: 8px 12px; background: oklch(0.982 0.002 286); font-family: Geist, ui-sans-serif, system-ui, sans-serif; } .ds-nav-item { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border-radius: 6.4px; font-size: 0.875rem; color: oklch(0.48 0.014 286); text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav-item:hover { background: oklch(0.94 0.004 286); color: oklch(0.21 0.006 286); } .ds-nav-item:focus-visible { outline: 2px solid oklch(0.5 0.2 277); outline-offset: 2px; } .ds-nav-current, .ds-nav-current:hover { background: oklch(1 0 0); color: oklch(0.21 0.006 286); font-weight: 500; box-shadow: 0 0 0 1px oklch(0.915 0.004 286), 0 1px 2px 0 oklch(0.21 0.006 286 / 0.05); } .ds-nav-current svg { color: oklch(0.5 0.2 277); }"
+    },
+    {
+      "name": "Orders Table",
+      "kind": "custom",
+      "refersTo": "table-row",
+      "description": "Desktop table: muted 12px headers, 44px rows, mono order numbers, pills paired, tabular right-aligned totals, well-coloured hover.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class=\"ds-num\">Total</th></tr></thead><tbody><tr><td class=\"ds-mono\">ORD-20260930-0007</td><td>Koperasi Sekolah SMK Taman Jaya</td><td><span class=\"ds-tpill\" style=\"background:oklch(97.7% 0.013 236.62);color:oklch(44.3% 0.11 240.79)\">Confirmed</span></td><td class=\"ds-num\">RM 266.80</td></tr><tr><td class=\"ds-mono\">ORD-20260930-0006</td><td>Pasar Mini Siti</td><td><span class=\"ds-tpill\" style=\"background:oklch(98.7% 0.022 95.277);color:oklch(47.3% 0.137 46.201)\">Pending</span></td><td class=\"ds-num\">RM 97.40</td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; border-collapse: collapse; font: 400 0.875rem/1.43 Geist, ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: oklch(0.21 0.006 286); } .ds-table th { height: 36px; padding: 0 12px; text-align: left; font-size: 0.75rem; font-weight: 500; color: oklch(0.48 0.014 286); border-bottom: 1px solid oklch(0.915 0.004 286); white-space: nowrap; } .ds-table td { height: 44px; padding: 8px 12px; white-space: nowrap; } .ds-table th:first-child, .ds-table td:first-child { padding-left: 16px; } .ds-table th:last-child, .ds-table td:last-child { padding-right: 16px; } .ds-table tbody tr { border-bottom: 1px solid oklch(0.915 0.004 286); transition: background-color 150ms; } .ds-table tbody tr:last-child { border-bottom: 0; } .ds-table tbody tr:hover { background: oklch(0.982 0.002 286); } .ds-num { text-align: right !important; } .ds-mono { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.8125rem; font-weight: 500; } .ds-tpill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Ledger",
+    "overview": "OrderFlow is operations software held to the category standard: Stripe Dashboard, Shopify Admin, Linear, Vercel. It is a calm, exact tool that disappears into the task. Owners and staff key orders in on a phone between WhatsApp chats and do admin on a laptop, so the system spends its attention on the things they must read instantly (what needs doing, what is unpaid, what is low) and spends nothing on decoration. White content panels sit on a faintly cool zinc well; one indigo accent marks the action you can take, where you are, and what has focus. Everything else is ink, hairline and space.\n\nDensity is moderate and list-shaped. Information arrives as divided rows inside bordered panels, with the figure that matters set large, tabular and right-aligned. Every summary is a door: attention rows, recent orders and list rows are whole-row links that land on the exact filtered view. State is a small, strict vocabulary of pills, shared by order status, payment status, stock and account state, and never carried by colour alone.\n\nThe system is light mode only. The `.dark` block in `frontend/src/app/globals.css` is the untouched shadcn default, not part of this designed system; no theme provider exists and dark mode is out of scope.",
+    "keyCharacteristics": [
+      "Geist Sans for all UI, Geist Mono only for order numbers and SKUs.",
+      "Every money and count figure in tabular numerals, right-aligned; RM always to two decimals.",
+      "Cool zinc neutrals, white content, one tinted second neutral for sidebar and page wells, one indigo accent.",
+      "Flat bordered panels; shadows reserved for controls (whisper) and overlays (real lift).",
+      "1px hairlines and an 8px panel radius; pills fully round.",
+      "150ms ease-out colour transitions on interactive state only; no page-load choreography."
+    ],
+    "rules": [
+      { "name": "The One Indigo Rule", "body": "Indigo means action, location, link or focus, and nothing else. It never fills a panel, a heading or a status.", "section": "colors" },
+      { "name": "The Hue Belongs to State Rule", "body": "Amber, sky, violet, cyan, emerald and rose appear only inside the status vocabulary (pills, their paired figures, attention icon tiles). No decorative use.", "section": "colors" },
+      { "name": "The Tabular Money Rule", "body": "Every RM amount, count, quantity and page number uses the `tabular` utility (`tnum` plus `ss01`) and sits right-aligned in its column or row. Tables apply it to the whole table.", "section": "typography" },
+      { "name": "The Mono Is for Identifiers Rule", "body": "Geist Mono sets order numbers and SKUs, nothing else: not money, not dates, not labels.", "section": "typography" },
+      { "name": "The Flat Panel Rule", "body": "In-flow panels, tables, lists and empty states are flat: border only, no shadow. Lift is reserved for controls (whisper), the lone auth or error panel (raised) and overlays.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** set every RM amount and count with the `tabular` utility, right-aligned, always to two decimals for money.",
+      "**Do** use the shared pill anatomy (22px, fully round, tint, inset ring, dot or glyph) for any new state, and pair a coloured figure with a pill.",
+      "**Do** make summaries whole-row links to the exact filtered view, with a well-coloured hover and a visible focus ring.",
+      "**Do** keep in-flow panels flat (hairline border, 8px radius) and put lift only on controls, the lone auth panel, and overlays.",
+      "**Do** build each screen as phone and desktop siblings over the same data: tables on desktop, divided lists in a panel on phone.",
+      "**Do** limit motion to 150 to 200ms ease-out colour and transform transitions on interactive state, and honour reduced motion."
+    ],
+    "donts": [
+      "**Don't** use indigo for anything but primary actions, links, current selection and focus.",
+      "**Don't** let status rely on colour alone: every state has a label, and payment states have distinct glyphs.",
+      "**Don't** use Geist Mono for money, dates or labels; it is for order numbers and SKUs.",
+      "**Don't** add shadows to panels, tables or lists, and don't use pure-black shadows.",
+      "**Don't** fill destructive buttons; they stay outlined in red.",
+      "**Don't** build the dashboard as a wall of same-size coloured-border KPI cards, or let tables clip.",
+      "**Don't** treat the `.dark` variables in globals.css as a designed theme; the system is light only."
+    ]
+  }
+}

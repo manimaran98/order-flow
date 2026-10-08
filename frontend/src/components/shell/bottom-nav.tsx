@@ -33,7 +33,7 @@ export function BottomNav({ role }: { role: Role }) {
         if (href === '/orders/new') {
           return (
             <Link key={href} href={href} aria-current={current ? 'page' : undefined} className={cn(tab, 'h-16 text-foreground')}>
-              <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
+              <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-xs">
                 <Icon aria-hidden className="size-5" />
               </span>
               {label}
