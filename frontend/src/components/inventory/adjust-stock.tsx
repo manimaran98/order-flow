@@ -6,6 +6,7 @@ import { adjustStock } from '@/actions/inventory';
 import type { FormAction } from '@/actions/result';
 import { useFormAction } from '@/components/common/use-form-action';
 import { Field, FormError, SelectField, SubmitButton, TextareaField } from '@/components/common/field';
+import { SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -23,7 +24,7 @@ export function AdjustStockForm({ action, productId, onDone }: { action: FormAct
     }
   }, [state, onDone]);
   return (
-    <form onSubmit={onSubmit} className="grid gap-3">
+    <form onSubmit={onSubmit} className="grid gap-4">
       <input type="hidden" name="productId" value={productId} />
       <SelectField
         label="Type"
@@ -42,7 +43,7 @@ export function AdjustStockForm({ action, productId, onDone }: { action: FormAct
         step={1}
         required
         {...(type === 'RESTOCK' ? { min: 1 } : {})}
-        hint={type === 'ADJUSTMENT' ? 'Use a negative number to remove stock, e.g. -2' : undefined}
+        hint={type === 'ADJUSTMENT' ? 'Use a negative number to remove stock, e.g. -2' : 'Units received. Added to the current stock.'}
       />
       <TextareaField
         label="Note"
@@ -53,7 +54,9 @@ export function AdjustStockForm({ action, productId, onDone }: { action: FormAct
         placeholder={type === 'ADJUSTMENT' ? 'Why? e.g. damaged, recount' : 'Optional'}
       />
       <FormError message={state && !state.ok ? state.error : null} />
-      <SubmitButton pending={pending}>Save adjustment</SubmitButton>
+      <SubmitButton pending={pending} className="mt-1 sm:justify-self-end">
+        Save adjustment
+      </SubmitButton>
     </form>
   );
 }
@@ -63,15 +66,16 @@ export function AdjustStockDialog({ product }: { product: { id: string; name: st
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" aria-label={`Adjust stock for ${product.name}`}>
-          Adjust
+        <Button variant="outline" size="sm" className="size-10 px-0 md:h-8 md:w-auto md:px-2.5" aria-label={`Adjust stock for ${product.name}`}>
+          <SlidersHorizontal aria-hidden className="text-muted-foreground" />
+          <span className="hidden md:inline">Adjust</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Adjust stock</DialogTitle>
           <DialogDescription>
-            {product.name} · {product.stockQuantity} in stock
+            {product.name} · <span className="tabular">{product.stockQuantity}</span> in stock
           </DialogDescription>
         </DialogHeader>
         <AdjustStockForm action={adjustStock} productId={product.id} onDone={() => setOpen(false)} />

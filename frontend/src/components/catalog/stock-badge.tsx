@@ -1,13 +1,18 @@
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
-export function StockBadge({ inStock }: { inStock: boolean }) {
+// Same pill as StatusBadge: a dot in the hue, the label carries the meaning.
+const pill = 'inline-flex h-[1.375rem] shrink-0 items-center gap-1.5 rounded-full px-2 text-xs font-medium whitespace-nowrap ring-1 ring-inset';
+
+export function StockBadge({ inStock, className }: { inStock: boolean; className?: string }) {
   return inStock ? (
-    <Badge variant="outline" className="border-green-300 bg-green-50 text-green-800">
+    <span data-stock="in" className={cn(pill, 'bg-emerald-50 text-emerald-800 ring-emerald-600/20', className)}>
+      <span aria-hidden className="size-1.5 rounded-full bg-emerald-500" />
       In stock
-    </Badge>
+    </span>
   ) : (
-    <Badge variant="outline" className="border-zinc-300 bg-zinc-100 text-zinc-600">
+    <span data-stock="out" className={cn(pill, 'bg-zinc-100 text-zinc-600 ring-zinc-500/20', className)}>
+      <span aria-hidden className="size-1.5 rounded-full bg-zinc-400" />
       Out of stock
-    </Badge>
+    </span>
   );
 }

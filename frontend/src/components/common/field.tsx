@@ -13,14 +13,19 @@ export const selectClass =
   "h-10 w-full cursor-pointer appearance-none rounded-md border border-input bg-background bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2371717a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E\")] bg-[length:1rem] bg-[right_0.625rem_center] bg-no-repeat pr-8 pl-3 text-base shadow-xs transition-[border-color,box-shadow] duration-150 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 md:h-9 md:text-sm";
 
 type Base = { label: string; name: string; hint?: string; className?: string };
+type WithInputClass = { inputClassName?: string };
 
-export function Field({ label, name, hint, className, ...props }: Base & Omit<ComponentProps<'input'>, 'name'>) {
+export function Field({ label, name, hint, className, inputClassName, ...props }: Base & WithInputClass & Omit<ComponentProps<'input'>, 'name'>) {
   const id = useId();
   return (
     <div className={cn('grid gap-1.5', className)}>
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} name={name} {...props} />
-      {hint && <p className="text-[0.8125rem] text-muted-foreground">{hint}</p>}
+      <Input id={id} name={name} aria-describedby={hint ? `${id}-hint` : undefined} className={inputClassName} {...props} />
+      {hint && (
+        <p id={`${id}-hint`} className="text-[0.8125rem] text-muted-foreground">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
@@ -30,8 +35,12 @@ export function TextareaField({ label, name, hint, className, ...props }: Base &
   return (
     <div className={cn('grid gap-1.5', className)}>
       <Label htmlFor={id}>{label}</Label>
-      <Textarea id={id} name={name} {...props} />
-      {hint && <p className="text-[0.8125rem] text-muted-foreground">{hint}</p>}
+      <Textarea id={id} name={name} aria-describedby={hint ? `${id}-hint` : undefined} {...props} />
+      {hint && (
+        <p id={`${id}-hint`} className="text-[0.8125rem] text-muted-foreground">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

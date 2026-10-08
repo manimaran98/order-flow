@@ -1,14 +1,20 @@
+import { PackageX } from 'lucide-react';
 import Link from 'next/link';
+import { EmptyState } from '@/components/common/empty-state';
 import { Button } from '@/components/ui/button';
 
 export default function CatalogNotFound() {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed bg-card p-8 text-center">
-      <p className="font-medium">This product isn&apos;t available</p>
-      <p className="text-sm text-muted-foreground">It may no longer be sold, or the link is wrong.</p>
-      <Button asChild variant="outline">
-        <Link href="/catalog">See all products</Link>
-      </Button>
-    </div>
+    <EmptyState
+      icon={PackageX}
+      title="This product isn’t available"
+      description="It may no longer be sold, or the link is wrong."
+      className="bg-card shadow-xs"
+      action={
+        <Button asChild variant="outline">
+          <Link href="/catalog">See all products</Link>
+        </Button>
+      }
+    />
   );
 }

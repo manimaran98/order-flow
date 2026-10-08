@@ -1,10 +1,11 @@
 import { FilterSelect } from '@/components/common/filter-select';
 import { SearchInput } from '@/components/common/search-input';
 
+/** The list panel's toolbar row. */
 export function OrderFilters() {
   return (
-    <div className="mb-4 grid gap-2 sm:grid-cols-[2fr_1fr_1fr]">
-      <div className="self-end">
+    <div className="grid grid-cols-2 gap-3 border-b px-4 py-3 md:px-5 lg:grid-cols-[minmax(0,1fr)_13rem_13rem] lg:items-end">
+      <div className="col-span-2 lg:col-span-1">
         <SearchInput label="Search orders" />
       </div>
       <FilterSelect

@@ -19,7 +19,7 @@ export function LogoMark({ className }: { className?: string }) {
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cn('inline-flex items-center gap-2 text-[0.9375rem] font-semibold tracking-[-0.01em]', className)}>
+    <span className={cn('inline-flex items-center gap-2 text-[0.9375rem] leading-none font-semibold tracking-[-0.01em]', className)}>
       <LogoMark />
       OrderFlow
     </span>

@@ -1,7 +1,6 @@
 import { createUser } from '@/actions/users';
 import { AdminOnly } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateUserForm } from '@/components/users/create-user-form';
 import { UsersList } from '@/components/users/users-list';
 import { apiFetch } from '@/lib/api';
@@ -17,16 +16,16 @@ export default async function UsersPage() {
   return (
     <>
       <PageHeader title="Users" description="Give staff their own logins. Deactivating someone signs them out at once." />
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
         <UsersList users={users.data} currentUserId={me.id} />
-        <Card>
-          <CardHeader>
-            <CardTitle>Add a user</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CreateUserForm action={createUser} />
-          </CardContent>
-        </Card>
+        <section aria-labelledby="add-user-heading" className="overflow-hidden rounded-lg border bg-card shadow-xs">
+          <div className="flex min-h-12 items-center border-b px-4 py-3 md:px-5">
+            <h2 id="add-user-heading" className="text-[0.9375rem] font-semibold tracking-[-0.01em]">
+              Add a user
+            </h2>
+          </div>
+          <CreateUserForm action={createUser} />
+        </section>
       </div>
     </>
   );
