@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { SESSION_COOKIE, SESSION_MAX_AGE } from './session-cookie';
+import { SESSION_COOKIE, SESSION_MAX_AGE, sessionCookieSecure } from './session-cookie';
 
 export async function getToken() {
   return (await cookies()).get(SESSION_COOKIE)?.value;
@@ -11,7 +11,7 @@ export async function setSession(token: string) {
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: sessionCookieSecure(),
     path: '/',
     maxAge: SESSION_MAX_AGE,
   });

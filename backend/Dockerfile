@@ -19,6 +19,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 FROM deps AS migrate
+# Why: deps skipped install scripts, so fetch Prisma's schema engine now instead of on every run.
+RUN apk add --no-cache openssl && npm rebuild @prisma/engines
 COPY prisma.config.ts ./
 COPY prisma ./prisma
 CMD ["npx", "prisma", "migrate", "deploy"]
