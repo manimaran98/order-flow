@@ -67,7 +67,8 @@ describe('OrderComposer', () => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Create order' })[1]);
     expect((await screen.findAllByRole('alert'))[0]).toHaveTextContent("Couldn't save the order. Check your connection and try again.");
     screen.getAllByRole('status', { name: 'Order total' }).forEach((t) => expect(t).toHaveTextContent('RM 12.50'));
-    expect(screen.getAllByRole('button', { name: 'Create order' })[1]).toBeEnabled();
+    // The error renders before the transition settles, so wait for the button to come back.
+    expect((await screen.findAllByRole('button', { name: 'Create order' }))[1]).toBeEnabled();
     expect(push).not.toHaveBeenCalled();
   });
 

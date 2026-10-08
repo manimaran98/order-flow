@@ -11,8 +11,10 @@ export default async function NewProductPage() {
   if (user.role !== 'ADMIN') return <AdminOnly />;
   return (
     <>
-      <PageHeader title="New product" />
-      <ProductForm action={createProduct} submitLabel="Save product" />
+      <PageHeader title="New product" back={{ href: '/products', label: 'Products' }} />
+      <div className="max-w-2xl overflow-hidden rounded-lg border bg-card">
+        <ProductForm action={createProduct} submitLabel="Save product" cancelHref="/products" />
+      </div>
     </>
   );
 }

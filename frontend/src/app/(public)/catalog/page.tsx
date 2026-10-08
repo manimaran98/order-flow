@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { CatalogBrowser } from '@/components/catalog/catalog-browser';
+import { Package, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { getCatalog } from '@/lib/public-api';
@@ -19,9 +20,9 @@ export default async function CatalogPage() {
     <>
       <PageHeader title="Our products" description="Prices in Ringgit Malaysia. Message us to order." />
       {products === null ? (
-        <EmptyState title="The catalog is being updated" description="Please check back in a few minutes." />
+        <EmptyState icon={RefreshCw} title="The catalog is being updated" description="Please check back in a few minutes." className="bg-card" />
       ) : products.length === 0 ? (
-        <EmptyState title="No products yet" description="Please check back soon." />
+        <EmptyState icon={Package} title="No products yet" description="Please check back soon." className="bg-card" />
       ) : (
         <CatalogBrowser products={products} />
       )}

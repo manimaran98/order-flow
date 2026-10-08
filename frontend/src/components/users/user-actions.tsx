@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Role, User } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 export function UserActions({ user, isSelf }: { user: User; isSelf: boolean }) {
   const [pending, startTransition] = useTransition();
@@ -20,13 +21,13 @@ export function UserActions({ user, isSelf }: { user: User; isSelf: boolean }) {
       else toast.error(r.error);
     });
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 md:justify-end">
       <Label htmlFor={roleId} className="sr-only">
         Role for {user.name}
       </Label>
       <select
         id={roleId}
-        className={`${selectClass} w-28`}
+        className={cn(selectClass, 'w-24 md:h-8 md:w-28 md:text-[0.8125rem]')}
         value={user.role}
         disabled={isSelf || pending}
         onChange={(e) => save({ role: e.target.value as Role }, 'Role updated')}
@@ -37,6 +38,7 @@ export function UserActions({ user, isSelf }: { user: User; isSelf: boolean }) {
       <Button
         variant="outline"
         size="sm"
+        className="h-10 md:h-8"
         disabled={isSelf || pending}
         onClick={() => save({ isActive: !user.isActive }, user.isActive ? 'User deactivated' : 'User activated')}
       >
@@ -54,7 +56,7 @@ function ResetPassword({ user, onSave }: { user: User; onSave: (password: string
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="outline" size="sm" className="h-10 md:h-8">
           Reset password
         </Button>
       </DialogTrigger>

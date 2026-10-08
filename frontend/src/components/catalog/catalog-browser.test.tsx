@@ -8,12 +8,12 @@ const products: CatalogItem[] = [
   { id: 'p2', name: 'Milo 3in1', description: null, sellingPrice: '15.90', inStock: false },
 ];
 
-const phoneList = () => screen.getByRole('list', { name: 'Products' });
+const productList = () => screen.getByRole('list', { name: 'Products' });
 
 describe('CatalogBrowser', () => {
   it('shows price in RM and stock status, linking to each product', () => {
     render(<CatalogBrowser products={products} />);
-    const items = within(phoneList()).getAllByRole('listitem');
+    const items = within(productList()).getAllByRole('listitem');
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent('RM 1,234.50');
     expect(items[0]).toHaveTextContent('In stock');
@@ -21,17 +21,18 @@ describe('CatalogBrowser', () => {
     expect(within(items[1]).getByRole('link')).toHaveAttribute('href', '/catalog/p2');
   });
 
-  it('renders the same products in the desktop grid', () => {
+  it('renders one list for every screen size, with the description when there is one', () => {
     render(<CatalogBrowser products={products} />);
-    const grid = screen.getByRole('list', { name: 'Products (grid)' });
-    expect(within(grid).getAllByRole('listitem')).toHaveLength(2);
-    expect(grid).toHaveTextContent('Isotonic drink');
+    expect(screen.getAllByRole('list')).toHaveLength(1);
+    const items = within(productList()).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Isotonic drink');
+    expect(screen.getByText('2 products')).toBeInTheDocument();
   });
 
   it('filters by name as the customer types', async () => {
     render(<CatalogBrowser products={products} />);
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search products' }), 'milo');
-    const items = within(phoneList()).getAllByRole('listitem');
+    const items = within(productList()).getAllByRole('listitem');
     expect(items).toHaveLength(1);
     expect(items[0]).toHaveTextContent('Milo 3in1');
   });

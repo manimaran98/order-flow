@@ -26,7 +26,15 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
   };
   return (
     <>
-      <PageHeader title={`Edit ${order.orderNumber}`} description="Saving re-prices items at today's prices." />
+      <PageHeader
+        back={{ href: `/orders/${id}`, label: order.orderNumber }}
+        title={
+          <>
+            Edit <span className="font-mono tracking-[-0.03em]">{order.orderNumber}</span>
+          </>
+        }
+        description="Saving re-prices items at today's prices."
+      />
       <OrderComposer mode="edit" initial={initial} submit={updateOrder.bind(null, id)} />
     </>
   );

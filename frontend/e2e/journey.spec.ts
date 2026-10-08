@@ -69,7 +69,7 @@ test('an owner takes a WhatsApp order all the way to paid (brief §23)', async (
 
   // 11–12. The dashboard reflects it.
   await page.goto('/dashboard');
-  await expect(page.getByRole('link', { name: 'Completed orders: 1' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /^Today's orders: 1 · RM / })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Low-stock products: 1' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Unpaid orders: 0' })).toBeVisible();
 

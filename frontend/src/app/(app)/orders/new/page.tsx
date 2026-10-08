@@ -7,7 +7,7 @@ export const metadata = { title: 'New order' };
 export default function NewOrderPage() {
   return (
     <>
-      <PageHeader title="New order" />
+      <PageHeader title="New order" back={{ href: '/orders', label: 'Orders' }} />
       <OrderComposer mode="create" submit={createOrder} />
     </>
   );
