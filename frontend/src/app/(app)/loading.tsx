@@ -10,7 +10,7 @@ export default function Loading() {
         <Skeleton className="h-7 w-40 md:h-8" />
         <Skeleton className="h-4 w-56" />
       </div>
-      <div className="overflow-hidden rounded-lg border bg-card shadow-xs">
+      <div className="overflow-hidden rounded-lg border bg-card">
         <div className="flex items-center justify-between border-b px-4 py-3 md:px-5">
           <Skeleton className="h-5 w-28" />
           <Skeleton className="h-4 w-16" />

@@ -9,7 +9,7 @@ export default function NotFound() {
       icon={SearchX}
       title="We couldn’t find that"
       description="It may have been deleted, or the link is wrong."
-      className="bg-card shadow-xs"
+      className="bg-card"
       action={
         <Button asChild variant="outline">
           <Link href="/dashboard">Back to dashboard</Link>

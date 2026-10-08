@@ -38,7 +38,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           </Button>
         }
       />
-      <div className="overflow-hidden rounded-lg border bg-card shadow-xs">
+      <div className="overflow-hidden rounded-lg border bg-card">
         <OrderFilters />
         {result.data.length === 0 ? (
           filtered ? (

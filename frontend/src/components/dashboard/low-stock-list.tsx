@@ -6,7 +6,7 @@ import { PanelHeader } from './recent-orders';
 
 export function LowStockList({ items }: { items: StockRow[] }) {
   return (
-    <section aria-labelledby="lowstock-heading" className="h-fit overflow-hidden rounded-lg border bg-card shadow-xs">
+    <section aria-labelledby="lowstock-heading" className="h-fit overflow-hidden rounded-lg border bg-card">
       <PanelHeader id="lowstock-heading" title="Low stock" href="/inventory?low=1" linkLabel="Inventory" />
       {items.length === 0 ? (
         <p className="flex items-center gap-2 px-4 py-6 text-sm text-muted-foreground md:px-5">

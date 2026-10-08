@@ -7,7 +7,7 @@ type Props = { title: string; description?: string; action?: ReactNode; icon?: L
 export function EmptyState({ title, description, action, icon: Icon = Inbox, className }: Props) {
   return (
     <div className={cn('flex flex-col items-center rounded-lg border bg-surface px-6 py-12 text-center', className)}>
-      <span className="mb-4 grid size-10 place-items-center rounded-full border bg-background text-muted-foreground shadow-xs">
+      <span className="mb-4 grid size-10 place-items-center rounded-full border bg-background text-muted-foreground">
         <Icon aria-hidden className="size-[1.125rem]" />
       </span>
       <p className="text-[0.9375rem] font-semibold">{title}</p>

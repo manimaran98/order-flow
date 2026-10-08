@@ -29,7 +29,7 @@ export default async function CatalogProductPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader title={product.name} back={{ href: '/catalog', label: 'All products' }} />
-      <article aria-label={product.name} className="overflow-hidden rounded-lg border bg-card shadow-xs">
+      <article aria-label={product.name} className="overflow-hidden rounded-lg border bg-card">
         <div className="grid gap-5 p-5 md:p-6">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <MoneyText value={product.sellingPrice} className="text-3xl font-semibold tracking-[-0.02em]" />

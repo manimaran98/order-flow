@@ -8,7 +8,7 @@ export default function NewCustomerPage() {
   return (
     <>
       <PageHeader title="New customer" back={{ href: '/customers', label: 'Customers' }} />
-      <div className="max-w-2xl overflow-hidden rounded-lg border bg-card shadow-xs">
+      <div className="max-w-2xl overflow-hidden rounded-lg border bg-card">
         <CustomerForm action={createCustomer} submitLabel="Save customer" cancelHref="/customers" />
       </div>
     </>

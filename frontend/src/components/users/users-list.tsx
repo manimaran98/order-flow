@@ -7,7 +7,7 @@ import { UserActions } from './user-actions';
 
 export function UsersList({ users, currentUserId }: { users: User[]; currentUserId: string }) {
   return (
-    <section aria-labelledby="team-heading" className="h-fit overflow-hidden rounded-lg border bg-card shadow-xs">
+    <section aria-labelledby="team-heading" className="h-fit overflow-hidden rounded-lg border bg-card">
       <div className="flex min-h-12 items-center justify-between gap-3 border-b px-4 py-3 md:px-5">
         <h2 id="team-heading" className="text-[0.9375rem] font-semibold tracking-[-0.01em]">
           Team

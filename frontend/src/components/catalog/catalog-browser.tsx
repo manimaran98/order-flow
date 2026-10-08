@@ -21,7 +21,7 @@ export function CatalogBrowser({ products }: { products: CatalogItem[] }) {
   const shown = needle ? products.filter((p) => p.name.toLowerCase().includes(needle)) : products;
 
   return (
-    <section aria-label="Product list" className="overflow-hidden rounded-lg border bg-card shadow-xs">
+    <section aria-label="Product list" className="overflow-hidden rounded-lg border bg-card">
       <div className="flex items-center gap-3 border-b px-3 py-3 md:px-5">
         <div className="relative min-w-0 flex-1 md:max-w-sm">
           <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />

@@ -12,7 +12,7 @@ export default async function NewProductPage() {
   return (
     <>
       <PageHeader title="New product" back={{ href: '/products', label: 'Products' }} />
-      <div className="max-w-2xl overflow-hidden rounded-lg border bg-card shadow-xs">
+      <div className="max-w-2xl overflow-hidden rounded-lg border bg-card">
         <ProductForm action={createProduct} submitLabel="Save product" cancelHref="/products" />
       </div>
     </>

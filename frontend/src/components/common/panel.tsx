@@ -21,7 +21,7 @@ export function Panel({ title, id, action, aside, children, className, as: Tag =
   const generated = useId();
   const headingId = id ?? generated;
   return (
-    <Tag aria-labelledby={title ? headingId : undefined} className={cn('h-fit overflow-hidden rounded-lg border bg-card shadow-xs', className)}>
+    <Tag aria-labelledby={title ? headingId : undefined} className={cn('h-fit overflow-hidden rounded-lg border bg-card', className)}>
       {title && (
         <div className="flex min-h-12 items-center justify-between gap-3 border-b px-4 py-3 md:px-5">
           <h2 id={headingId} className="text-[0.9375rem] font-semibold tracking-[-0.01em]">
@@ -53,7 +53,7 @@ export function Facts({ items }: { items: { label: string; value: ReactNode; num
 /** An edit form folded into the page instead of a modal; opens in place. */
 export function EditDisclosure({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <details className="group h-fit overflow-hidden rounded-lg border bg-card shadow-xs">
+    <details className="group h-fit overflow-hidden rounded-lg border bg-card">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] transition-colors duration-150 outline-none select-none hover:bg-surface focus-visible:ring-3 focus-visible:ring-ring/35 focus-visible:ring-inset md:px-5 [&::-webkit-details-marker]:hidden">
         {title}
         <ChevronDown aria-hidden className="size-4 text-muted-foreground transition-transform duration-200 ease-out group-open:rotate-180 motion-reduce:transition-none" />

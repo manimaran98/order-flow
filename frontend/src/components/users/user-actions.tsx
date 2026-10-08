@@ -56,7 +56,7 @@ function ResetPassword({ user, onSave }: { user: User; onSave: (password: string
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-10 md:h-8">
+        <Button variant="outline" size="sm" className="h-10 md:h-8">
           Reset password
         </Button>
       </DialogTrigger>

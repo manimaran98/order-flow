@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 export function ProductList({ products }: { products: Product[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card shadow-xs">
+    <div className="overflow-hidden rounded-lg border bg-card">
       <ul className="divide-y md:hidden">
         {products.map((p) => {
           const level = stockLevel(p);

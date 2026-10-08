@@ -18,7 +18,7 @@ export default async function UsersPage() {
       <PageHeader title="Users" description="Give staff their own logins. Deactivating someone signs them out at once." />
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
         <UsersList users={users.data} currentUserId={me.id} />
-        <section aria-labelledby="add-user-heading" className="overflow-hidden rounded-lg border bg-card shadow-xs">
+        <section aria-labelledby="add-user-heading" className="overflow-hidden rounded-lg border bg-card">
           <div className="flex min-h-12 items-center border-b px-4 py-3 md:px-5">
             <h2 id="add-user-heading" className="text-[0.9375rem] font-semibold tracking-[-0.01em]">
               Add a user

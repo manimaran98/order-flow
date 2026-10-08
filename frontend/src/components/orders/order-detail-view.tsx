@@ -10,6 +10,7 @@ import { Panel } from '@/components/common/panel';
 import { PaymentPanel, PaymentSheet } from './payment-sheet';
 import { PaymentsTimeline } from './payments-timeline';
 import { StatusActions } from './status-actions';
+import { formatPhoneMY, telHref } from '@/lib/phone';
 
 export function OrderDetailView({ order, role }: { order: OrderDetail; role: Role }) {
   const payable = canRecordPayment(order.status, order.paymentStatus);
@@ -53,7 +54,9 @@ export function OrderDetailView({ order, role }: { order: OrderDetail; role: Rol
               </span>
               {order.customer.phone && (
                 <>
-                  <span className="tabular">{order.customer.phone}</span>
+                  <a href={telHref(order.customer.phone)} className="tabular text-primary underline-offset-4 hover:underline">
+                    {formatPhoneMY(order.customer.phone)}
+                  </a>
                   <span className="mx-1.5" aria-hidden>
                     ·
                   </span>

@@ -48,10 +48,20 @@ export function PhoneComposer(props: ComposerViewProps) {
 
       {step === 1 && (
         <Panel title="Items" aside={count > 0 && <span className="tabular">{`${count} ${count === 1 ? 'item' : 'items'}`}</span>}>
-          <div className="border-b p-4">
+          {/* Added lines first: on a phone a long result list would otherwise push them off screen. */}
+          {draft.lines.length > 0 && (
+            <div className="border-b">
+              <LineItems lines={draft.lines} dispatch={dispatch} />
+            </div>
+          )}
+          <div className="p-4">
             <ProductPicker onAdd={(p) => dispatch({ type: 'addProduct', product: p })} />
           </div>
-          <LineItems lines={draft.lines} dispatch={dispatch} />
+          {draft.lines.length === 0 && (
+            <div className="border-t">
+              <LineItems lines={draft.lines} dispatch={dispatch} />
+            </div>
+          )}
         </Panel>
       )}
 

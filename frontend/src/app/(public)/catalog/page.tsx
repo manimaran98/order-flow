@@ -20,9 +20,9 @@ export default async function CatalogPage() {
     <>
       <PageHeader title="Our products" description="Prices in Ringgit Malaysia. Message us to order." />
       {products === null ? (
-        <EmptyState icon={RefreshCw} title="The catalog is being updated" description="Please check back in a few minutes." className="bg-card shadow-xs" />
+        <EmptyState icon={RefreshCw} title="The catalog is being updated" description="Please check back in a few minutes." className="bg-card" />
       ) : products.length === 0 ? (
-        <EmptyState icon={Package} title="No products yet" description="Please check back soon." className="bg-card shadow-xs" />
+        <EmptyState icon={Package} title="No products yet" description="Please check back soon." className="bg-card" />
       ) : (
         <CatalogBrowser products={products} />
       )}

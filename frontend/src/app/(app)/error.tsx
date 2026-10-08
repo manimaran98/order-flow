@@ -10,7 +10,7 @@ export default function AppError({ error, retry }: { error: Error & { digest?: s
       icon={TriangleAlert}
       title="Something went wrong"
       description={error.message || 'Please try again.'}
-      className="bg-card shadow-xs"
+      className="bg-card"
       action={<Button onClick={() => retry()}>Try again</Button>}
     />
   );

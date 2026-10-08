@@ -2,12 +2,13 @@ import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Customer } from '@/lib/types';
+import { formatPhoneMY } from '@/lib/phone';
 
 const dash = <span className="text-muted-foreground">—</span>;
 
 export function CustomerList({ customers }: { customers: Customer[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card shadow-xs">
+    <div className="overflow-hidden rounded-lg border bg-card">
       <ul className="divide-y md:hidden">
         {customers.map((c) => (
           <li key={c.id}>
@@ -15,7 +16,7 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
               <span className="grid min-w-0 flex-1 gap-0.5">
                 <span className="truncate text-sm font-medium">{c.name}</span>
                 <span className="truncate text-[0.8125rem] text-muted-foreground">
-                  {[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact details'}
+                  {[c.phone && formatPhoneMY(c.phone), c.email].filter(Boolean).join(' · ') || 'No contact details'}
                 </span>
               </span>
               <ChevronRight aria-hidden className="size-4 shrink-0 text-muted-foreground" />
@@ -45,7 +46,7 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
                     {c.name}
                   </Link>
                 </TableCell>
-                <TableCell className="tabular">{c.phone || dash}</TableCell>
+                <TableCell className="tabular">{c.phone ? formatPhoneMY(c.phone) : dash}</TableCell>
                 <TableCell className="max-w-[16rem] truncate">{c.email || dash}</TableCell>
                 <TableCell className="max-w-[20rem] truncate text-muted-foreground">{c.address || dash}</TableCell>
               </TableRow>

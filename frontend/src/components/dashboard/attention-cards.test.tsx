@@ -25,7 +25,9 @@ describe('AttentionCards', () => {
   it('renders accessible cards', () => {
     render(<AttentionCards summary={summary} layout="stack" />);
     expect(screen.getByRole('link', { name: 'Unpaid orders: 3' })).toHaveAttribute('href', '/orders?paymentStatus=UNPAID,PARTIAL');
-    expect(screen.getByRole('link', { name: 'Completed orders: 83' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Pending orders: 2' })).toHaveAttribute('href', '/orders?status=PENDING');
+    // Completed orders left the dashboard in the redesign: an all-time count isn't something to act on today.
+    expect(screen.queryByRole('link', { name: /Completed orders/ })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: "Today's orders: 4 · RM 310.50" })).toBeInTheDocument();
   });
 });

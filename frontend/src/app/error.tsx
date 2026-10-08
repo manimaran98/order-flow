@@ -11,7 +11,7 @@ export default function RootError({ retry }: { error: Error & { digest?: string 
       <div className="grid w-full max-w-[400px] gap-8">
         <Logo className="justify-center" />
         <section className="flex flex-col items-center rounded-lg border bg-card px-6 py-10 text-center shadow-sm">
-          <span className="mb-4 grid size-10 place-items-center rounded-full border bg-background text-amber-600 shadow-xs">
+          <span className="mb-4 grid size-10 place-items-center rounded-full border bg-background text-amber-600">
             <TriangleAlert aria-hidden className="size-[1.125rem]" />
           </span>
           <h1 className="text-[0.9375rem] font-semibold">OrderFlow could not load this page.</h1>

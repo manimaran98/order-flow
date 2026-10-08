@@ -13,6 +13,7 @@ import { apiFetch, getOrNotFound } from '@/lib/api';
 import { getCurrentUser } from '@/lib/current-user';
 import { formatDate } from '@/lib/dates';
 import type { CustomerDetail, OrderSummary, Paginated } from '@/lib/types';
+import { formatPhoneMY, telHref } from '@/lib/phone';
 
 const none = <span className="text-muted-foreground">—</span>;
 
@@ -56,8 +57,8 @@ export default async function CustomerPage({
               {
                 label: 'Phone',
                 value: customer.phone ? (
-                  <a href={`tel:${customer.phone.replace(/[^0-9+]/g, '')}`} className="tabular text-primary underline-offset-4 hover:underline">
-                    {customer.phone}
+                  <a href={telHref(customer.phone)} className="tabular text-primary underline-offset-4 hover:underline">
+                    {formatPhoneMY(customer.phone)}
                   </a>
                 ) : (
                   none

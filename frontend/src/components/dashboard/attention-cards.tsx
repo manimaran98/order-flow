@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronRight, CircleCheckBig, Clock3, PackageOpen, TriangleAlert, Wallet, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Clock3, PackageOpen, TriangleAlert, Wallet, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { formatRM } from '@/lib/money';
 import type { DashboardSummary } from '@/lib/types';
@@ -30,7 +30,7 @@ const ICON_TONE = {
 };
 
 /**
- * "Needs attention" rows, each a door to the exact filtered list, plus a small "Today" panel.
+ * "Needs attention" rows, each a door to the exact filtered list, plus the "Today" summary.
  * Accessible names stay `<label>: <value>` so they read the same as the old cards.
  */
 export function AttentionCards({ summary, layout }: { summary: DashboardSummary; layout: 'stack' | 'grid' }) {
@@ -52,7 +52,7 @@ export function AttentionCards({ summary, layout }: { summary: DashboardSummary;
 
   return (
     <div className={cn('grid gap-4', layout === 'grid' && 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-6')}>
-      <section aria-labelledby="attention-heading" className="overflow-hidden rounded-lg border bg-card shadow-xs">
+      <section aria-labelledby="attention-heading" className="overflow-hidden rounded-lg border bg-card">
         <h2 id="attention-heading" className="border-b px-4 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] md:px-5">
           Needs attention
         </h2>
@@ -85,35 +85,25 @@ export function AttentionCards({ summary, layout }: { summary: DashboardSummary;
         </ul>
       </section>
 
-      <section aria-labelledby="today-heading" className="h-fit overflow-hidden rounded-lg border bg-card shadow-xs">
+      <section aria-labelledby="today-heading" className="h-fit overflow-hidden rounded-lg border bg-card">
         <h2 id="today-heading" className="border-b px-4 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] md:px-5">
-          At a glance
+          Today
         </h2>
-        <ul className="divide-y">
-          <GlanceRow item={by.today} icon={CalendarDays} primary={String(summary.todayOrders)} secondary={formatRM(summary.todaySales)} label="Orders today" />
-          <GlanceRow item={by.outstanding} icon={Wallet} primary={by.outstanding.value} label="Still to collect" />
-          <GlanceRow item={by.completed} icon={CircleCheckBig} primary={by.completed.value} label="Delivered, all time" />
-        </ul>
+        <Link
+          href={by.today.href}
+          aria-label={`${by.today.label}: ${by.today.value}`}
+          className="group grid grid-cols-2 divide-x transition-colors duration-150 hover:bg-surface"
+        >
+          <span className="grid gap-1 px-4 py-4 md:px-5">
+            <span className="text-[0.8125rem] text-muted-foreground">Orders</span>
+            <span className="tabular text-2xl font-semibold tracking-[-0.02em]">{summary.todayOrders}</span>
+          </span>
+          <span className="grid gap-1 px-4 py-4 md:px-5">
+            <span className="text-[0.8125rem] text-muted-foreground">Order value</span>
+            <span className="tabular text-2xl font-semibold tracking-[-0.02em]">{formatRM(summary.todaySales)}</span>
+          </span>
+        </Link>
       </section>
     </div>
-  );
-}
-
-function GlanceRow({ item, icon: Icon, label, primary, secondary }: { item: AttentionItem; icon: LucideIcon; label: string; primary: string; secondary?: string }) {
-  return (
-    <li>
-      <Link
-        href={item.href}
-        aria-label={`${item.label}: ${item.value}`}
-        className="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-surface md:px-5"
-      >
-        <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-        <span className="flex-1 text-sm text-muted-foreground">{label}</span>
-        <span className="tabular text-right">
-          <span className="block text-[0.9375rem] font-semibold">{primary}</span>
-          {secondary && <span className="block text-xs text-muted-foreground">{secondary}</span>}
-        </span>
-      </Link>
-    </li>
   );
 }

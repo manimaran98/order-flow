@@ -21,7 +21,7 @@ function PanelHeader({ id, title, href, linkLabel }: { id: string; title: string
 
 export function RecentOrders({ orders }: { orders: OrderListItem[] }) {
   return (
-    <section aria-labelledby="recent-heading" className="overflow-hidden rounded-lg border bg-card shadow-xs">
+    <section aria-labelledby="recent-heading" className="overflow-hidden rounded-lg border bg-card">
       <PanelHeader id="recent-heading" title="Recent orders" href="/orders" linkLabel="All orders" />
       {orders.length === 0 ? (
         <p className="px-5 py-8 text-center text-sm text-muted-foreground">No orders yet. New orders will show up here.</p>
@@ -35,13 +35,19 @@ export function RecentOrders({ orders }: { orders: OrderListItem[] }) {
                   <TableHead>Customer</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="w-8">
+                    <span className="sr-only">Open</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((o) => (
-                  <TableRow key={o.id}>
+                  <TableRow key={o.id} className="group relative focus-within:bg-surface">
                     <TableCell>
-                      <Link href={`/orders/${o.id}`} className="font-mono text-[0.8125rem] font-medium text-foreground hover:text-primary hover:underline">
+                      <Link
+                        href={`/orders/${o.id}`}
+                        className="font-mono text-[0.8125rem] font-medium text-foreground outline-none after:absolute after:inset-0 focus-visible:after:ring-3 focus-visible:after:ring-ring/35 focus-visible:after:ring-inset"
+                      >
                         {o.orderNumber}
                       </Link>
                     </TableCell>
@@ -54,6 +60,12 @@ export function RecentOrders({ orders }: { orders: OrderListItem[] }) {
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       <MoneyText value={o.total} />
+                    </TableCell>
+                    <TableCell className="w-8">
+                      <ChevronRight
+                        aria-hidden
+                        className="size-4 text-muted-foreground/50 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground"
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

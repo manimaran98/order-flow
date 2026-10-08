@@ -30,7 +30,7 @@ export function ProductPicker({ onAdd }: { onAdd: (p: Product) => void }) {
       </div>
       {loading && <span className="sr-only">Searching…</span>}
       {results.length > 0 && (
-        <ul className="max-h-72 divide-y overflow-y-auto overscroll-contain rounded-md border bg-card shadow-xs">
+        <ul className="divide-y rounded-md border bg-card">
           {results.map((p) => {
             const out = p.stockQuantity <= 0;
             return (

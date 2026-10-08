@@ -158,6 +158,26 @@
   a {
     text-underline-offset: 3px;
   }
+  /* Money and stock fields are typed, not spun: hide the native steppers. */
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  /* The date picker glyph, in the palette's muted ink. */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.55;
+    filter: grayscale(1);
+    transition: opacity 150ms ease-out;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator:hover {
+    opacity: 0.9;
+  }
   /* The browser's blue search-clear button, redrawn in the palette. */
   input[type='search']::-webkit-search-cancel-button {
     -webkit-appearance: none;

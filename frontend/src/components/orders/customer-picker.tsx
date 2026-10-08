@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDebouncedSearch } from '@/lib/use-debounced-search';
 import type { Draft } from './order-draft';
+import { formatPhoneMY } from '@/lib/phone';
 
 function Initials({ name }: { name: string }) {
   const letters = name
@@ -65,7 +66,7 @@ export function CustomerPicker({ selected, onSelect }: { selected: Draft['custom
         <Input
           type="search"
           aria-label="Search customers"
-          placeholder="Search customers by name or phone"
+          placeholder="Name or phone"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pr-9 pl-9"
@@ -76,7 +77,7 @@ export function CustomerPicker({ selected, onSelect }: { selected: Draft['custom
       </div>
       {loading && <span className="sr-only">Searching…</span>}
       {results.length > 0 && (
-        <ul className="max-h-72 divide-y overflow-y-auto overscroll-contain rounded-md border bg-card shadow-xs">
+        <ul className="max-h-72 divide-y overflow-y-auto overscroll-contain rounded-md border bg-card">
           {results.map((c) => (
             <li key={c.id}>
               <button
@@ -87,7 +88,7 @@ export function CustomerPicker({ selected, onSelect }: { selected: Draft['custom
                 <Initials name={c.name} />
                 <span className="grid min-w-0 gap-0.5">
                   <span className="truncate text-sm font-medium">{c.name}</span>
-                  {c.phone && <span className="tabular text-xs text-muted-foreground">{c.phone}</span>}
+                  {c.phone && <span className="tabular text-xs text-muted-foreground">{formatPhoneMY(c.phone)}</span>}
                 </span>
               </button>
             </li>

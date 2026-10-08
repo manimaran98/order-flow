@@ -15,13 +15,13 @@ export function OrderCards({ orders }: { orders: OrderListItem[] }) {
             href={`/orders/${o.id}`}
             className="flex items-center gap-3 px-4 py-3.5 outline-none transition-colors duration-150 hover:bg-surface focus-visible:bg-surface focus-visible:ring-3 focus-visible:ring-ring/35 focus-visible:ring-inset active:bg-surface"
           >
-            <span className="grid min-w-0 flex-1 gap-1.5">
+            <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-1.5">
               <span className="flex items-baseline justify-between gap-3">
                 <span className="truncate text-sm font-medium">{o.customer.name}</span>
                 <MoneyText value={o.total} className="text-sm font-semibold" />
               </span>
               <span className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground">
-                <span className="font-mono">{o.orderNumber}</span>
+                <span className="truncate font-mono">{o.orderNumber}</span>
                 {o.paymentStatus === 'PARTIAL' ? (
                   <span className="whitespace-nowrap">
                     <MoneyText value={o.outstandingAmount} /> due

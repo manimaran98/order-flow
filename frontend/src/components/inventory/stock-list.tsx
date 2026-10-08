@@ -7,7 +7,7 @@ import { Pill, StockPill, stockFigureClass, stockLevel } from '@/components/comm
 
 export function StockList({ rows, isAdmin }: { rows: StockRow[]; isAdmin: boolean }) {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card shadow-xs">
+    <div className="overflow-hidden rounded-lg border bg-card">
       <ul className="divide-y md:hidden">
         {rows.map((r) => {
           const level = stockLevel(r);
