@@ -3,7 +3,7 @@
 # and points the services at them, so the services ignore task_definition drift.
 
 locals {
-  app_url = "http://${aws_lb.main.dns_name}"
+  app_url = var.https_enabled ? "https://${var.domain_name}" : "http://${aws_lb.main.dns_name}"
 
   ecr_url = { for name, repo in aws_ecr_repository.app : name => repo.repository_url }
 
@@ -148,8 +148,9 @@ resource "aws_ecs_task_definition" "frontend" {
       { name = "PORT", value = "3000" },
       { name = "HOSTNAME", value = "0.0.0.0" },
       { name = "API_URL", value = "http://backend.${aws_service_discovery_private_dns_namespace.main.name}:4000" },
-      # The ALB serves plain HTTP until a domain and certificate are added (see alb.tf).
-      { name = "COOKIE_SECURE", value = "false" },
+      # A Secure cookie is never sent back over plain HTTP, so it stays off until
+      # the ALB serves HTTPS (see https.tf).
+      { name = "COOKIE_SECURE", value = var.https_enabled ? "true" : "false" },
     ]
     logConfiguration = local.log_config["frontend"]
   }])
@@ -239,5 +240,6 @@ resource "aws_ecs_service" "frontend" {
     ignore_changes = [task_definition]
   }
 
-  depends_on = [aws_lb_listener.http]
+  # With HTTPS on, only the 443 listener forwards to the target group.
+  depends_on = [aws_lb_listener.http, aws_lb_listener.https]
 }
