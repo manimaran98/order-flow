@@ -34,7 +34,11 @@ data "aws_iam_policy_document" "github_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/main"]
+      # Both subject formats: classic, and immutable (owner/repo ids, which survive renames).
+      values = compact([
+        "repo:${var.github_repository}:ref:refs/heads/main",
+        var.github_oidc_subject_prefix == "" ? "" : "${var.github_oidc_subject_prefix}:ref:refs/heads/main",
+      ])
     }
   }
 }

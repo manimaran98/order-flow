@@ -16,6 +16,17 @@ variable "github_repository" {
   default     = "manimaran98/order-flow"
 }
 
+variable "github_oidc_subject_prefix" {
+  description = <<-EOT
+    The repo part of the OIDC `sub` claim when the repository uses GitHub's immutable subject
+    format: repo:<owner>@<owner id>/<repo>@<repo id>. Check with
+    `curl https://api.github.com/repos/<owner>/<repo>/actions/oidc/customization/sub`
+    (sub_claim_prefix). Empty if the repository uses the classic repo:<owner>/<repo> format.
+  EOT
+  type        = string
+  default     = "repo:manimaran98@108385697/order-flow@1394933874"
+}
+
 variable "create_github_oidc_provider" {
   description = "The account already has the token.actions.githubusercontent.com OIDC provider (the terraform-deployer role uses it). Set true only in an account without one."
   type        = bool
