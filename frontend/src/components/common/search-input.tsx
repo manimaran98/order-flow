@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 
@@ -22,5 +23,10 @@ export function SearchInput({ label, param = 'search' }: { label: string; param?
     return () => clearTimeout(timer);
   }, [value, param, pathname, router, searchParams]);
 
-  return <Input type="search" aria-label={label} placeholder={label} value={value} onChange={(e) => setValue(e.target.value)} />;
+  return (
+    <div className="relative">
+      <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input type="search" aria-label={label} placeholder={label} value={value} onChange={(e) => setValue(e.target.value)} className="pl-9" />
+    </div>
+  );
 }

@@ -27,3 +27,10 @@ crash.log
 
 # Real GitHub variable values (template: infra/aws/github-variables.example.env)
 infra/aws/github-variables.env
+
+# Impeccable working files (decision pages, review captures, build state)
+.impeccable/questions/
+.impeccable/review/
+.impeccable/build/
+.impeccable/mocks/
+.impeccable/config.local.json

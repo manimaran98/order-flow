@@ -1,3 +1,4 @@
+import { CalendarDays, ChevronRight, CircleCheckBig, Clock3, PackageOpen, TriangleAlert, Wallet, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { formatRM } from '@/lib/money';
 import type { DashboardSummary } from '@/lib/types';
@@ -18,32 +19,101 @@ export function attentionItems(s: DashboardSummary): AttentionItem[] {
   ];
 }
 
-const TONE: Record<Tone, string> = {
-  red: 'border-l-red-500',
-  amber: 'border-l-amber-500',
-  blue: 'border-l-blue-500',
-  green: 'border-l-green-500',
+type Row = { item: AttentionItem; icon: LucideIcon; hint: string; count: number; iconTone: string };
+
+const ICON_TONE = {
+  rose: 'bg-rose-50 text-rose-700 ring-rose-600/15',
+  amber: 'bg-amber-50 text-amber-700 ring-amber-600/15',
+  violet: 'bg-violet-50 text-violet-700 ring-violet-600/15',
+  sky: 'bg-sky-50 text-sky-700 ring-sky-600/15',
+  emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-600/15',
 };
 
+/**
+ * "Needs attention" rows, each a door to the exact filtered list, plus a small "Today" panel.
+ * Accessible names stay `<label>: <value>` so they read the same as the old cards.
+ */
 export function AttentionCards({ summary, layout }: { summary: DashboardSummary; layout: 'stack' | 'grid' }) {
+  const by = Object.fromEntries(attentionItems(summary).map((i) => [i.key, i])) as Record<string, AttentionItem>;
+  const outstanding = Number(summary.outstandingAmount) > 0;
+
+  const rows: Row[] = [
+    {
+      item: by.unpaid,
+      icon: Wallet,
+      count: summary.unpaidOrders,
+      hint: outstanding ? `${by.outstanding.value} still to collect` : 'Every order is paid',
+      iconTone: ICON_TONE.rose,
+    },
+    { item: by.pending, icon: Clock3, count: summary.pendingOrders, hint: 'Waiting for you to confirm', iconTone: ICON_TONE.amber },
+    { item: by.fulfilment, icon: PackageOpen, count: summary.awaitingFulfilment, hint: 'To pack or deliver', iconTone: ICON_TONE.violet },
+    { item: by.lowstock, icon: TriangleAlert, count: summary.lowStockProducts, hint: 'At or below reorder level', iconTone: ICON_TONE.amber },
+  ];
+
   return (
-    <ul className={layout === 'stack' ? 'grid gap-2' : 'grid grid-cols-2 gap-3 lg:grid-cols-4'}>
-      {attentionItems(summary).map((item) => (
-        <li key={item.key}>
-          <Link
-            href={item.href}
-            aria-label={`${item.label}: ${item.value}`}
-            className={cn(
-              'flex h-full rounded-lg border border-l-4 bg-card p-4 transition-colors hover:bg-muted/50',
-              TONE[item.tone],
-              layout === 'stack' ? 'items-center justify-between' : 'flex-col gap-1',
-            )}
-          >
-            <span className="text-sm text-muted-foreground">{item.label}</span>
-            <span className="text-lg font-semibold tabular-nums">{item.value}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <div className={cn('grid gap-4', layout === 'grid' && 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-6')}>
+      <section aria-labelledby="attention-heading" className="overflow-hidden rounded-lg border bg-card shadow-xs">
+        <h2 id="attention-heading" className="border-b px-4 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] md:px-5">
+          Needs attention
+        </h2>
+        <ul className="divide-y">
+          {rows.map(({ item, icon: Icon, hint, count, iconTone }) => {
+            const clear = count === 0;
+            return (
+              <li key={item.key}>
+                <Link
+                  href={item.href}
+                  aria-label={`${item.label}: ${item.value}`}
+                  className="group flex items-center gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-surface md:gap-4 md:px-5"
+                >
+                  <span className={cn('grid size-9 shrink-0 place-items-center rounded-md ring-1 ring-inset', clear ? 'bg-muted text-muted-foreground ring-border' : iconTone)}>
+                    <Icon aria-hidden className="size-[1.125rem]" />
+                  </span>
+                  <span className="grid min-w-0 flex-1 gap-0.5">
+                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="truncate text-[0.8125rem] text-muted-foreground">{clear ? 'Nothing to do' : hint}</span>
+                  </span>
+                  <span className={cn('tabular text-2xl font-semibold tracking-[-0.02em]', clear && 'text-muted-foreground/70')}>{item.value}</span>
+                  <ChevronRight
+                    aria-hidden
+                    className="size-4 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground"
+                  />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section aria-labelledby="today-heading" className="h-fit overflow-hidden rounded-lg border bg-card shadow-xs">
+        <h2 id="today-heading" className="border-b px-4 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] md:px-5">
+          At a glance
+        </h2>
+        <ul className="divide-y">
+          <GlanceRow item={by.today} icon={CalendarDays} primary={String(summary.todayOrders)} secondary={formatRM(summary.todaySales)} label="Orders today" />
+          <GlanceRow item={by.outstanding} icon={Wallet} primary={by.outstanding.value} label="Still to collect" />
+          <GlanceRow item={by.completed} icon={CircleCheckBig} primary={by.completed.value} label="Delivered, all time" />
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function GlanceRow({ item, icon: Icon, label, primary, secondary }: { item: AttentionItem; icon: LucideIcon; label: string; primary: string; secondary?: string }) {
+  return (
+    <li>
+      <Link
+        href={item.href}
+        aria-label={`${item.label}: ${item.value}`}
+        className="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-surface md:px-5"
+      >
+        <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex-1 text-sm text-muted-foreground">{label}</span>
+        <span className="tabular text-right">
+          <span className="block text-[0.9375rem] font-semibold">{primary}</span>
+          {secondary && <span className="block text-xs text-muted-foreground">{secondary}</span>}
+        </span>
+      </Link>
+    </li>
   );
 }

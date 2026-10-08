@@ -15,7 +15,7 @@ export function Pagination({ meta, pathname, params }: Props) {
   const hasPrev = meta.page > 1;
   const hasNext = meta.page < meta.totalPages;
   return (
-    <nav aria-label="Pagination" className="flex items-center justify-between gap-2 py-4">
+    <nav aria-label="Pagination" className="flex items-center justify-between gap-2 pt-4">
       {hasPrev ? (
         <Button asChild variant="outline" size="sm">
           <Link href={href(meta.page - 1)}>Previous</Link>
@@ -25,7 +25,7 @@ export function Pagination({ meta, pathname, params }: Props) {
           Previous
         </Button>
       )}
-      <span className="text-sm text-muted-foreground">
+      <span className="tabular text-[0.8125rem] text-muted-foreground">
         Page {meta.page} of {meta.totalPages}
       </span>
       {hasNext ? (

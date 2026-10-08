@@ -11,8 +11,8 @@ export function FilterSelect({ label, param, options }: { label: string; param: 
   const searchParams = useSearchParams();
   const id = useId();
   return (
-    <div className="grid gap-1">
-      <Label htmlFor={id} className="text-xs text-muted-foreground">
+    <div className="grid gap-1.5">
+      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
       <select
