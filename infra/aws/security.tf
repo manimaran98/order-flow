@@ -1,4 +1,5 @@
-# Traffic path: internet -> ALB :80 -> frontend :3000 -> backend :4000 -> RDS :5432
+# Traffic path: internet -> ALB :80 (and :443 with https_enabled) -> frontend :3000
+# -> backend :4000 -> RDS :5432
 
 resource "aws_security_group" "alb" {
   name        = "${var.project}-alb"
@@ -30,6 +31,16 @@ resource "aws_vpc_security_group_ingress_rule" "alb_http" {
   ip_protocol       = "tcp"
   from_port         = 80
   to_port           = 80
+}
+
+# Port 80 stays open with HTTPS on, so plain-HTTP visitors get the redirect.
+resource "aws_vpc_security_group_ingress_rule" "alb_https" {
+  count             = var.https_enabled ? 1 : 0
+  security_group_id = aws_security_group.alb.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
 }
 
 resource "aws_vpc_security_group_ingress_rule" "frontend_from_alb" {

@@ -57,3 +57,43 @@ variable "log_retention_days" {
   type    = number
   default = 14
 }
+
+# HTTPS takes two applies so that neither waits on DNS: the first (domain_name
+# set) requests the certificate, the second (https_enabled) uses it once ISSUED.
+# The Terraform workflow passes unset repository variables as "", so "" is "not set".
+
+variable "domain_name" {
+  description = "Hostname to serve the app on, e.g. app.example.com. Empty: no certificate; the app is served over HTTP on the ALB's own DNS name."
+  type        = string
+  default     = ""
+  nullable    = false
+
+  validation {
+    condition     = var.domain_name == "" || can(regex("^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$", var.domain_name))
+    error_message = "domain_name must be a lowercase hostname such as app.example.com, without scheme, port or path."
+  }
+}
+
+variable "https_enabled" {
+  description = "Serve HTTPS with the domain_name certificate and redirect HTTP to it. Turn on only once the certificate is ISSUED."
+  type        = bool
+  default     = false
+  nullable    = false
+
+  validation {
+    condition     = !var.https_enabled || var.domain_name != ""
+    error_message = "https_enabled needs domain_name: set DOMAIN_NAME, apply, add the DNS records, wait for ISSUED, then set HTTPS_ENABLED."
+  }
+}
+
+variable "route53_zone_id" {
+  description = "Route 53 hosted zone that holds domain_name. Set: Terraform writes the validation and alias records. Empty: the dns_records output lists them for your registrar."
+  type        = string
+  default     = ""
+  nullable    = false
+
+  validation {
+    condition     = var.route53_zone_id == "" || var.domain_name != ""
+    error_message = "route53_zone_id only has an effect together with domain_name."
+  }
+}
