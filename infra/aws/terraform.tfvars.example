@@ -1,0 +1,22 @@
+# Only for running Terraform on your own machine: copy to terraform.tfvars (gitignored).
+# GitHub Actions doesn't use this file: every variable has a default, and the HTTPS ones
+# come from the DOMAIN_NAME / HTTPS_ENABLED / ROUTE53_ZONE_ID repository variables.
+# All variables, with descriptions: variables.tf
+
+aws_region        = "ap-southeast-1"
+github_repository = "manimaran98/order-flow"
+
+# Sizes (the defaults are the cheapest that run comfortably)
+# db_instance_class = "db.t4g.micro"
+# backend_cpu       = 256
+# backend_memory    = 512
+# frontend_cpu      = 256
+# frontend_memory   = 512
+
+# HTTPS, once you own a domain
+# domain_name     = "app.example.com"
+# https_enabled   = false
+# route53_zone_id = ""
+
+# Bump to generate a new DB password and JWT secret on the next apply, then re-run Deploy.
+# secrets_version = 1

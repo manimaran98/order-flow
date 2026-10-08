@@ -24,3 +24,6 @@ crash.log
 
 # Agent worktrees (Claude Code)
 .claude/worktrees/
+
+# Real GitHub variable values (template: infra/aws/github-variables.example.env)
+infra/aws/github-variables.env

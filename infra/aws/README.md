@@ -33,10 +33,12 @@ Roughly **USD 50–60/month** in `ap-southeast-1`: ALB ~$20, two 0.25 vCPU Farga
 
 ## First-time setup
 
+Every GitHub repository variable, with its value and where to find it, is listed in [`github-variables.example.env`](github-variables.example.env).
+
 Terraform runs in GitHub Actions (`.github/workflows/terraform.yml`) using an IAM role you create once by hand:
 
 - **OIDC provider:** `token.actions.githubusercontent.com` with audience `sts.amazonaws.com`.
-- **Role** (e.g. `terraform-deployer`): trusts that provider for `repo:manimaran98/order-flow:*`. It needs rights to manage VPC, ELB, ECS, RDS, ECR, IAM, SSM, CloudWatch Logs, Cloud Map and the S3 state bucket (plus ACM and Route 53 for [HTTPS](#adding-https)). On a personal demo account, `AdministratorAccess` is the practical choice.
+- **Role** (e.g. `terraform-deployer`): trusts that provider for this repo's `main` branch and pull requests. Match the `sub` format your repo actually sends: newer repositories use GitHub's *immutable subject*, `repo:<owner>@<owner id>/<repo>@<repo id>:ref:refs/heads/main`, not `repo:<owner>/<repo>:...`. A mismatch fails with "Not authorized to perform sts:AssumeRoleWithWebIdentity". Find the prefix with `curl https://api.github.com/repos/<owner>/<repo>/actions/oidc/customization/sub` (`sub_claim_prefix`), and set `github_oidc_subject_prefix` to match so the deploy role Terraform creates trusts it too. It needs rights to manage VPC, ELB, ECS, RDS, ECR, IAM, SSM, CloudWatch Logs, Cloud Map and the S3 state bucket (plus ACM and Route 53 for [HTTPS](#adding-https)). On a personal demo account, `AdministratorAccess` is the practical choice.
 
 Then:
 
