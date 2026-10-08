@@ -80,7 +80,7 @@ Without a domain the app is served over plain HTTP on the ALB's own hostname, an
 |---|---|
 | `DOMAIN_NAME` | The hostname to serve on, e.g. `app.example.com` (lowercase, no `https://`) |
 | `ROUTE53_ZONE_ID` | Only if the domain's DNS is hosted in Route 53: the hosted zone ID, e.g. `Z0123456789ABCDEFGHIJ` |
-| `HTTPS_ENABLED` | `true`, but only once the certificate is issued (step 4) |
+| `HTTPS_ENABLED` | `true` (lowercase; Terraform rejects `True` or `yes`), but only once the certificate is issued (step 4) |
 
 Set them under **Settings → Secrets and variables → Actions → Variables**. Changing a variable doesn't start a run, so each "apply" below means **Actions → Terraform → Run workflow → apply** on `main`.
 
@@ -113,7 +113,8 @@ Use this if you bought the domain through Route 53 (the hosted zone is created f
 ### What the second apply changes
 
 - Adds a 443 listener with the certificate (`ELBSecurityPolicy-TLS13-1-2-2021-06`: TLS 1.3 and 1.2 only) and opens 443 on the ALB's security group.
-- Port 80 now answers with a 301 redirect to `https://<domain>`, so old links and typed URLs still land on HTTPS.
+- Port 80 now answers with a 302 redirect to `https://<domain>`, so old links (including the ALB address) and typed URLs land on HTTPS. It is a 302, not a 301, so switching HTTPS back off later isn't blocked by browsers that cached the redirect.
+- Turn HTTPS off before changing `DOMAIN_NAME`: a new certificate has to be validated first, and the apply would time out waiting for it.
 - Registers new task definitions with `COOKIE_SECURE=true` (frontend) and `CORS_ORIGIN=https://<domain>` (backend), and the `app_url` output becomes `https://<domain>`. The services keep running their current revision until the next deploy, which is why step 5 re-runs **Deploy**; the site already works over HTTPS in between.
 
 If the apply fails with a timeout on `aws_acm_certificate_validation`, the certificate wasn't issued yet: set `HTTPS_ENABLED` back to `false` (or wait), check the DNS record, and apply again once it shows ISSUED.

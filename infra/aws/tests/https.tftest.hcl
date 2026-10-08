@@ -178,7 +178,8 @@ run "https_registrar" {
     condition = (
       aws_lb_listener.http.default_action[0].type == "redirect" &&
       aws_lb_listener.http.default_action[0].redirect[0].protocol == "HTTPS" &&
-      aws_lb_listener.http.default_action[0].redirect[0].status_code == "HTTP_301"
+      aws_lb_listener.http.default_action[0].redirect[0].status_code == "HTTP_302" &&
+      aws_lb_listener.http.default_action[0].redirect[0].host == "app.example.com"
     )
     error_message = "Port 80 redirects to HTTPS."
   }

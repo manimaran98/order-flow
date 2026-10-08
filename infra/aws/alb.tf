@@ -41,10 +41,14 @@ resource "aws_lb_listener" "http" {
 
     dynamic "redirect" {
       for_each = var.https_enabled ? [1] : []
+      # To the domain, not #{host}: the old http://<alb-dns> links would otherwise land on a
+      # certificate-name error. 302 because browsers cache 301s, which would strand returning
+      # visitors on :443 if HTTPS is ever switched back off.
       content {
+        host        = var.domain_name
         protocol    = "HTTPS"
         port        = "443"
-        status_code = "HTTP_301"
+        status_code = "HTTP_302"
       }
     }
   }
