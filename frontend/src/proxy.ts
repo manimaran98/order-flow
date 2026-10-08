@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE } from '@/lib/session-cookie';
 
-const PUBLIC = ['/login', '/register', '/session/expired'];
+// /catalog is the customer-facing ISR catalog; /api/health is polled by the load balancer.
+const PUBLIC = ['/login', '/register', '/session/expired', '/catalog', '/api/health'];
 
 /** Presence check only: the API validates the token itself. */
 export function proxy(request: NextRequest) {

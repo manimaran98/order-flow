@@ -113,6 +113,15 @@ export interface Product {
   updatedAt: string;
 }
 
+/** A product as the public catalog shows it: no cost, SKU or stock count. */
+export interface CatalogItem {
+  id: string;
+  name: string;
+  description: string | null;
+  sellingPrice: Money;
+  inStock: boolean;
+}
+
 export interface StockRow {
   id: string;
   name: string;
