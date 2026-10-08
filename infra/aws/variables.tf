@@ -17,9 +17,9 @@ variable "github_repository" {
 }
 
 variable "create_github_oidc_provider" {
-  description = "Set false if the account already has the token.actions.githubusercontent.com OIDC provider."
+  description = "The account already has the token.actions.githubusercontent.com OIDC provider (the terraform-deployer role uses it). Set true only in an account without one."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "db_instance_class" {

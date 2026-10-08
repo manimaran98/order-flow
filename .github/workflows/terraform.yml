@@ -1,0 +1,120 @@
+name: Terraform
+
+# Plans infra/aws on pull requests, applies it on merge to main, and can be run by
+# hand from the Actions tab to plan, apply or destroy (destroy stops all AWS charges).
+# Skipped until the AWS_TERRAFORM_ROLE_ARN repository variable is set.
+on:
+  pull_request:
+    paths: ["infra/aws/**", ".github/workflows/terraform.yml"]
+  push:
+    branches: [main]
+    paths: ["infra/aws/**", ".github/workflows/terraform.yml"]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "plan, apply or destroy (apply and destroy only run on main)"
+        type: choice
+        options: [plan, apply, destroy]
+        default: plan
+
+concurrency:
+  group: terraform-aws
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+  TF_VAR_aws_region: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  ACTION: ${{ inputs.action || (github.event_name == 'push' && 'apply' || 'plan') }}
+
+jobs:
+  terraform:
+    name: Terraform ${{ inputs.action || (github.event_name == 'push' && 'apply' || 'plan') }}
+    if: vars.AWS_TERRAFORM_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/aws
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Refuse apply/destroy outside main
+        if: env.ACTION != 'plan' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::$ACTION only runs on main; this run is on $GITHUB_REF"
+          exit 1
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.3
+          terraform_wrapper: false
+
+      # The state bucket can't live in the state it holds, so it's created here once.
+      - name: Ensure state bucket
+        id: state
+        run: |
+          set -euo pipefail
+          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET="orderflow-tfstate-$ACCOUNT"
+          if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+            echo "Creating $BUCKET"
+            aws s3api create-bucket --bucket "$BUCKET" --region "$AWS_REGION" \
+              --create-bucket-configuration "LocationConstraint=$AWS_REGION"
+            aws s3api put-bucket-versioning --bucket "$BUCKET" --versioning-configuration Status=Enabled
+            aws s3api put-public-access-block --bucket "$BUCKET" --public-access-block-configuration \
+              BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+          fi
+          echo "bucket=$BUCKET" >> "$GITHUB_OUTPUT"
+
+      - run: terraform fmt -check -recursive
+      - run: >-
+          terraform init
+          -backend-config="bucket=${{ steps.state.outputs.bucket }}"
+          -backend-config="key=orderflow/terraform.tfstate"
+          -backend-config="region=$AWS_REGION"
+      - run: terraform validate
+
+      - name: Plan
+        run: |
+          set -euo pipefail
+          if [ "$ACTION" = "destroy" ]; then terraform plan -destroy -out=tfplan; else terraform plan -out=tfplan; fi
+          {
+            echo "## Terraform $ACTION plan"
+            echo '```'
+            terraform show -no-color tfplan | tail -c 60000
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply
+        if: env.ACTION != 'plan'
+        run: terraform apply tfplan
+
+      - name: Outputs for the Deploy workflow
+        if: env.ACTION == 'apply'
+        run: |
+          {
+            echo "## App URL"
+            echo "$(terraform output -raw app_url)"
+            echo
+            echo "## Repository variables for the Deploy workflow"
+            echo "Settings > Secrets and variables > Actions > Variables"
+            echo '```'
+            terraform output -json github_variables | jq -r 'to_entries[] | "\(.key)=\(.value)"'
+            echo '```'
+            echo
+            echo "## Optional: load demo data (after the first deploy)"
+            echo '```'
+            terraform output -raw seed_command
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

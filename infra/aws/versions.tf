@@ -13,13 +13,12 @@ terraform {
     }
   }
 
-  # State is local by default. For a team, use S3 with native locking:
-  # backend "s3" {
-  #   bucket       = "<your-state-bucket>"
-  #   key          = "orderflow/terraform.tfstate"
-  #   region       = "ap-southeast-1"
-  #   use_lockfile = true
-  # }
+  # Remote state in S3 with native lock files. bucket/key/region are passed to
+  # `terraform init -backend-config=...` (see .github/workflows/terraform.yml).
+  backend "s3" {
+    use_lockfile = true
+    encrypt      = true
+  }
 }
 
 provider "aws" {
