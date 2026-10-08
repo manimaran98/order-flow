@@ -28,6 +28,10 @@ permissions:
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
   TF_VAR_aws_region: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+  # HTTPS (see infra/aws/README.md). Unset variables arrive as "", which Terraform treats as unset.
+  TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+  TF_VAR_https_enabled: ${{ vars.HTTPS_ENABLED || 'false' }}
+  TF_VAR_route53_zone_id: ${{ vars.ROUTE53_ZONE_ID }}
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
   ACTION: ${{ inputs.action || (github.event_name == 'push' && 'apply' || 'plan') }}
@@ -83,6 +87,8 @@ jobs:
           -backend-config="key=orderflow/terraform.tfstate"
           -backend-config="region=$AWS_REGION"
       - run: terraform validate
+      # Mocked AWS provider: checks the HTTPS switch without touching the account.
+      - run: terraform test
 
       - name: Plan
         run: |
@@ -117,4 +123,31 @@ jobs:
             terraform output -raw seed_command
             echo
             echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: DNS records for the domain
+        if: env.ACTION == 'apply' && env.TF_VAR_domain_name != ''
+        run: |
+          set -euo pipefail
+          {
+            echo "## DNS for $TF_VAR_domain_name"
+            if [ "$(terraform output -json dns_records | jq length)" -gt 0 ]; then
+              echo "Add these records at your DNS provider. Keep the validation record: ACM uses it to renew the certificate."
+              echo
+              echo "| Name | Type | Value |"
+              echo "|---|---|---|"
+              terraform output -json dns_records | jq -r '.[] | "| `\(.name)` | \(.type) | `\(.value)` |"'
+              echo
+              echo "For an apex domain (no subdomain), use your provider's ALIAS/ANAME type for the last record if it has one."
+            else
+              echo "Route 53 holds the validation and alias records; nothing to add by hand."
+            fi
+            if [ "$TF_VAR_https_enabled" != "true" ]; then
+              echo
+              echo "Once this prints ISSUED, set the HTTPS_ENABLED repository variable to true and apply again:"
+              echo '```'
+              terraform output -raw certificate_status_command
+              echo
+              echo '```'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

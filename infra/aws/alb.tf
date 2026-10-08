@@ -17,6 +17,8 @@ resource "aws_lb_target_group" "frontend" {
   vpc_id               = aws_vpc.main.id
   deregistration_delay = 30
 
+  # Stays on /login until a frontend with the /api/health Route Handler is
+  # deployed; switching first would fail the checks and cycle the tasks.
   health_check {
     path                = "/login"
     matcher             = "200"
@@ -26,15 +28,32 @@ resource "aws_lb_target_group" "frontend" {
   }
 }
 
-# Plain HTTP until there is a domain: add an ACM certificate and a 443 listener
-# then, redirect 80 -> 443, and drop COOKIE_SECURE=false from the frontend task.
+# Plain HTTP forwards to the app until https_enabled; then it only redirects to
+# the HTTPS listener in https.tf, so the session cookie never travels unencrypted.
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
+    type             = var.https_enabled ? "redirect" : "forward"
+    target_group_arn = var.https_enabled ? null : aws_lb_target_group.frontend.arn
+
+    dynamic "redirect" {
+      for_each = var.https_enabled ? [1] : []
+      # To the domain, not #{host}: the old http://<alb-dns> links would otherwise land on a
+      # certificate-name error. 302 because browsers cache 301s, which would strand returning
+      # visitors on :443 if HTTPS is ever switched back off.
+      content {
+        host        = var.domain_name
+        protocol    = "HTTPS"
+        port        = "443"
+        status_code = "HTTP_302"
+      }
+    }
   }
+
+  # Turning HTTPS on creates the 443 listener before this one starts redirecting;
+  # turning it off restores forwarding here before the 443 listener is removed.
+  depends_on = [aws_lb_listener.https]
 }

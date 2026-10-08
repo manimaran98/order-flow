@@ -25,11 +25,18 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <PageHeader
         title="Products"
         actions={
-          user.role === 'ADMIN' && (
-            <Button asChild>
-              <Link href="/products/new">New product</Link>
+          <>
+            <Button asChild variant="outline">
+              <Link href="/catalog" target="_blank" rel="noopener noreferrer">
+                View public catalog
+              </Link>
             </Button>
-          )
+            {user.role === 'ADMIN' && (
+              <Button asChild>
+                <Link href="/products/new">New product</Link>
+              </Button>
+            )}
+          </>
         }
       />
       <div className="mb-4 grid gap-2 sm:grid-cols-[2fr_1fr_1fr]">

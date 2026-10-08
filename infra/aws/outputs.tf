@@ -3,6 +3,29 @@ output "app_url" {
   value       = local.app_url
 }
 
+output "alb_dns_name" {
+  description = "The load balancer's own hostname, for pointing domain_name at it."
+  value       = aws_lb.main.dns_name
+}
+
+# Empty when there is no domain, or when Route 53 holds the records. Otherwise:
+# the certificate's validation CNAME, plus the record that sends the domain to the
+# ALB. An apex domain (example.com) can't be a CNAME at most registrars; use the
+# registrar's ALIAS/ANAME type there, or serve the app on a subdomain.
+output "dns_records" {
+  description = "DNS records to add at your registrar for domain_name."
+  value = local.has_domain && !local.use_route53 ? concat(local.cert_validation_records, [{
+    name  = var.domain_name
+    type  = "CNAME"
+    value = aws_lb.main.dns_name
+  }]) : []
+}
+
+output "certificate_status_command" {
+  description = "Prints the certificate's status. Set HTTPS_ENABLED=true once it says ISSUED."
+  value       = local.has_domain ? "aws acm describe-certificate --region ${var.aws_region} --certificate-arn ${aws_acm_certificate.app[0].arn} --query Certificate.Status --output text" : ""
+}
+
 output "github_variables" {
   description = "Set these as repository variables (Settings > Secrets and variables > Actions > Variables)."
   value = {

@@ -13,10 +13,10 @@ export class ApiError extends Error {
   }
 }
 
-type Query = Record<string, string | number | boolean | null | undefined>;
+export type Query = Record<string, string | number | boolean | null | undefined>;
 type Options = { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; body?: unknown; query?: Query; auth?: boolean };
 
-function apiUrl(path: string, query: Query = {}) {
+export function apiUrl(path: string, query: Query = {}) {
   const url = new URL(path, process.env.API_URL ?? 'http://localhost:4000');
   for (const [key, value] of Object.entries(query)) {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
