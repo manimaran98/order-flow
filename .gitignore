@@ -13,3 +13,11 @@ frontend/.next/
 frontend/playwright-report/
 frontend/test-results/
 .env.local
+
+# Terraform: providers, state (holds infrastructure details) and local variable files
+infra/**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log

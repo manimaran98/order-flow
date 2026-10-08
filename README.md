@@ -82,6 +82,8 @@ docker compose -f docker-compose.prod.yml exec backend node dist/seed.js   # opt
 3. **Playwright**: the phone and desktop journey, once both jobs above pass. If it fails, the report is uploaded as an artifact.
 4. **Docker images**: all three images are built on every run. Pushes to `main` also publish them to GHCR as `ghcr.io/<owner>/order-flow-<image>:<sha>` and `:latest`.
 
+When CI passes on `main`, `.github/workflows/deploy.yml` pushes the images to ECR, runs migrations and rolls out to AWS ECS Fargate. The infrastructure is Terraform in [`infra/aws/`](infra/aws/README.md).
+
 ## How the tricky parts work
 
 - **No overselling:** confirming an order runs `UPDATE products SET stock = stock - q WHERE stock >= q` per item inside one transaction. Zero rows updated means insufficient stock, and everything rolls back. A `CHECK (stock_quantity >= 0)` constraint backs it up.
