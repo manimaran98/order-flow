@@ -42,15 +42,21 @@ const CUSTOMERS = [
 const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn'] });
 try {
   const prisma = app.get(PrismaService);
-  if ((await prisma.user.count()) > 0) {
-    console.log('Users already exist; skipping seed.');
+  // Skip only when business data exists, so a deployment where someone already registered
+  // the first account can still load the demo data alongside it.
+  if ((await prisma.product.count()) > 0) {
+    console.log('Products already exist; skipping seed.');
   } else {
-    const { user: admin } = await app
-      .get(AuthService)
-      .register({ name: 'Demo Admin', email: 'admin@orderflow.local', password: 'Admin123!' });
-    const staff = await app
-      .get(UsersService)
-      .create({ name: 'Demo Staff', email: 'staff@orderflow.local', password: 'Staff123!', role: 'STAFF' });
+    const users = app.get(UsersService);
+    const existing = (email: string) => prisma.user.findUnique({ where: { email } });
+    const admin =
+      (await existing('admin@orderflow.local')) ??
+      ((await prisma.user.count()) === 0
+        ? (await app.get(AuthService).register({ name: 'Demo Admin', email: 'admin@orderflow.local', password: 'Admin123!' })).user
+        : await users.create({ name: 'Demo Admin', email: 'admin@orderflow.local', password: 'Admin123!', role: 'ADMIN' }));
+    const staff =
+      (await existing('staff@orderflow.local')) ??
+      (await users.create({ name: 'Demo Staff', email: 'staff@orderflow.local', password: 'Staff123!', role: 'STAFF' }));
 
     const products: { id: string }[] = [];
     for (const p of PRODUCTS) products.push(await app.get(ProductsService).create(p, admin.id));
