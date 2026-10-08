@@ -1,0 +1,141 @@
+name: Deploy
+
+# Runs after CI passes on main (or by hand from the Actions tab). Skipped until the
+# AWS repository variables from `terraform output github_variables` are set.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # GitHub OIDC token -> AWS role, no stored keys
+
+env:
+  PROJECT: orderflow
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  deploy:
+    name: Deploy to AWS (ECS Fargate)
+    if: vars.AWS_DEPLOY_ROLE_ARN != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SHA }}
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Same cache scopes as the CI image builds, so these are mostly cache hits.
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          target: runtime
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend:${{ env.SHA }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build and push migrations
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          target: migrate
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend-migrate:${{ env.SHA }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend-migrate:latest
+          cache-from: type=gha,scope=backend-migrate
+          cache-to: type=gha,mode=max,scope=backend-migrate
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-frontend:${{ env.SHA }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-frontend:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      # Migrations run as a one-off Fargate task before any new code serves traffic.
+      # A failed migration stops the deploy, leaving the running version untouched.
+      - name: Run database migrations
+        env:
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend-migrate:${{ env.SHA }}
+          SUBNETS: ${{ vars.MIGRATE_SUBNETS }}
+          SECURITY_GROUP: ${{ vars.MIGRATE_SECURITY_GROUP }}
+        run: |
+          set -euo pipefail
+          aws ecs describe-task-definition --task-definition "$PROJECT-migrate" --query taskDefinition \
+            | jq --arg img "$IMAGE" '.containerDefinitions[0].image = $img
+                | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+            > migrate-task.json
+          TASK_DEF=$(aws ecs register-task-definition --cli-input-json file://migrate-task.json \
+            --query taskDefinition.taskDefinitionArn --output text)
+
+          TASK=$(aws ecs run-task --cluster "$PROJECT" --task-definition "$TASK_DEF" --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SECURITY_GROUP],assignPublicIp=ENABLED}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Migration task: $TASK"
+          aws ecs wait tasks-stopped --cluster "$PROJECT" --tasks "$TASK"
+
+          read -r EXIT_CODE REASON < <(aws ecs describe-tasks --cluster "$PROJECT" --tasks "$TASK" \
+            --query 'tasks[0].[containers[0].exitCode, stoppedReason]' --output text)
+          echo "Exit code: $EXIT_CODE ($REASON)"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Migration failed. Logs: CloudWatch /ecs/$PROJECT-migrate"
+            exit 1
+          fi
+
+      - name: Render backend task definition
+        run: aws ecs describe-task-definition --task-definition "$PROJECT-backend" --query taskDefinition > backend-task.json
+      - id: backend-render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: backend-task.json
+          container-name: backend
+          image: ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend:${{ env.SHA }}
+      - name: Deploy backend
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.backend-render.outputs.task-definition }}
+          cluster: ${{ env.PROJECT }}
+          service: ${{ env.PROJECT }}-backend
+          wait-for-service-stability: true
+
+      - name: Render frontend task definition
+        run: aws ecs describe-task-definition --task-definition "$PROJECT-frontend" --query taskDefinition > frontend-task.json
+      - id: frontend-render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: frontend-task.json
+          container-name: frontend
+          image: ${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-frontend:${{ env.SHA }}
+      - name: Deploy frontend
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.frontend-render.outputs.task-definition }}
+          cluster: ${{ env.PROJECT }}
+          service: ${{ env.PROJECT }}-frontend
+          wait-for-service-stability: true

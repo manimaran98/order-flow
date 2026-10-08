@@ -1,5 +1,12 @@
 node_modules
 .next
-.env.local
+coverage
+e2e
 playwright-report
 test-results
+*.tsbuildinfo
+*.log
+.env
+.env.*
+Dockerfile*
+.dockerignore

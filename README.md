@@ -56,6 +56,34 @@ npm run dev                  # http://localhost:3000
 
 The browser only ever talks to Next.js. Server Components and Server Actions call the API with the JWT from an httpOnly cookie, so the token is never exposed to page scripts.
 
+## Production images
+
+`docker-compose.yml` is for development (hot reload, source mounted). The production images are multi-stage builds that run as the non-root `node` user:
+
+| Image | Dockerfile target | What it does |
+|---|---|---|
+| backend | `backend/Dockerfile` → `runtime` | Compiled API with production dependencies only. Health check on `/health`. |
+| backend-migrate | `backend/Dockerfile` → `migrate` | One-off job: `prisma migrate deploy`, then exits. Run it before each backend release. |
+| frontend | `frontend/Dockerfile` | Next.js standalone server. `API_URL` is read at runtime, so one image serves every environment. |
+
+To run them locally:
+
+```bash
+JWT_SECRET=$(openssl rand -hex 32) docker compose -f docker-compose.prod.yml up --build
+docker compose -f docker-compose.prod.yml exec backend node dist/seed.js   # optional demo data
+```
+
+## CI
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`:
+
+1. **Backend**: lint, typecheck, build, unit tests and API e2e tests against a Postgres 16 service container.
+2. **Frontend**: lint, typecheck, unit tests and production build.
+3. **Playwright**: the phone and desktop journey, once both jobs above pass. If it fails, the report is uploaded as an artifact.
+4. **Docker images**: all three images are built on every run. Pushes to `main` also publish them to GHCR as `ghcr.io/<owner>/order-flow-<image>:<sha>` and `:latest`.
+
+When CI passes on `main`, `.github/workflows/deploy.yml` pushes the images to ECR, runs migrations and rolls out to AWS ECS Fargate. The infrastructure is Terraform in [`infra/aws/`](infra/aws/README.md).
+
 ## How the tricky parts work
 
 - **No overselling:** confirming an order runs `UPDATE products SET stock = stock - q WHERE stock >= q` per item inside one transaction. Zero rows updated means insufficient stock, and everything rolls back. A `CHECK (stock_quantity >= 0)` constraint backs it up.
